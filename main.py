@@ -37,8 +37,11 @@ p = player(Current_Direction,current_frame)
 #gun data:
 bulletSpeed = 15
 fireRate = 6
-angle_offset = 3
+angleOffset = 2.7
+baseLineAngle = 2.7
 circleRotation = 0
+rightMouseFrame = 0
+leftMouseFrame = 0
 
 gunSurface = pygame.Surface((10,10))
 gunRect = gunSurface.get_rect()
@@ -88,6 +91,26 @@ while True:
                 pygame.quit()
                 sys.exit()
 
+    mouse_buttons = pygame.mouse.get_pressed()
+    M_pressed = mouse_buttons[0]
+    
+    if event.type == pygame.MOUSEBUTTONDOWN:
+        if event.button == 3:
+            rightMouseFrame = current_frame
+
+    if event.type == pygame.MOUSEBUTTONUP:
+        if event.button == 3:
+            leftMouseFrame = current_frame
+
+    if mouse_buttons[2]:
+        angleOffset = (baseLineAngle + (0.035 * (current_frame - rightMouseFrame)))
+        if (angleOffset >= 3.05):
+            angleOffset =  3.05
+        
+    if not mouse_buttons[2] and angleOffset >= baseLineAngle:
+        if angleOffset >= baseLineAngle:
+            angleOffset -= (0.005 * (current_frame - leftMouseFrame))
+
     keys = pygame.key.get_pressed()
     if keys[pygame.K_a] and keys[pygame.K_w]:
         Current_Direction = Directions.UpAndLeft
@@ -108,8 +131,6 @@ while True:
     else:
         Current_Direction = Directions.InValid
 
-    mouse_buttons = pygame.mouse.get_pressed()
-    M_pressed = mouse_buttons[0]
     
     mouse_x, mouse_y = pygame.mouse.get_pos()
     playerList = p.MovePlayer(Current_Direction)
@@ -143,8 +164,8 @@ while True:
     lineStart = (((gunLineX),(gunLineY)))
     lineEnd = endX, endY
 
-    line1_end = rotateLines(lineEnd, lineStart, angle_offset)
-    line2_end = rotateLines(lineEnd, lineStart, -angle_offset)
+    line1_end = rotateLines(lineEnd, lineStart, angleOffset)
+    line2_end = rotateLines(lineEnd, lineStart, -angleOffset)
 
     #pygame.draw.line(screen, BLACK, lineStart, lineEnd, 2)
     pygame.draw.line(screen, BLACK, lineStart, line1_end, 2)

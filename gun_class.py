@@ -3,8 +3,13 @@ import sys
 from pygame.locals import QUIT
 import math
 
+pygame.init()
+
 bullet1 = pygame.image.load("x/bullet1.png")
 bulletRect = bullet1.get_rect()
+
+rifleShot = pygame.mixer.Sound("sounds/rifleShot.wav")
+rifleShot.set_volume(0.1)
 
 screen = pygame.display.set_mode((1000, 700))
 screenRect = screen.get_rect()
@@ -34,6 +39,7 @@ class gunLogic:
         if (M1Pressed):
             if (now - self.last_tick) >= fireRate:
                 self.last_tick = now
+                pygame.mixer.Sound.play(rifleShot)
                 bulletXlist.append(bulletRect.x)
                 bulletYlist.append(bulletRect.y)
                 bulletRotList.append(rotation)
