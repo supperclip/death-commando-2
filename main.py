@@ -37,7 +37,7 @@ p = player(Current_Direction,current_frame)
 #gun data:
 bulletSpeed = 15
 fireRate = 6
-angle_offset = 2.8
+angle_offset = 3
 circleRotation = 0
 
 gunSurface = pygame.Surface((10,10))
@@ -135,10 +135,8 @@ while True:
     gunRect.x = gunPosX
     gunRect.y = gunPosY
 
-    gunLineX = rotateAroundCircleX(playerRect,Tangle_radians,30)
-    gunLineY = rotateAroundCircleY(playerRect,Tangle_radians,30)
-
-    #screen.blit(gunSurface,(gunPosX,gunPosY)) 
+    gunLineX = rotateAroundCircleX(playerRect,Tangle_radians,35)
+    gunLineY = rotateAroundCircleY(playerRect,Tangle_radians,35)
     
     endX = (playerRect.x + TrotX * Tdist)
     endY = (playerRect.y + TrotY * Tdist)
@@ -152,6 +150,7 @@ while True:
     pygame.draw.line(screen, BLACK, lineStart, line1_end, 2)
     pygame.draw.line(screen, BLACK, lineStart, line2_end, 2)
     
+    #screen.blit(gunSurface,(gunPosX,gunPosY)) 
     #pygame.draw.rect(screen, (255, 0, 0),gunRect , 2)
 
     screen.blit(rotated_player_image, playerRoatedRect.topleft)
