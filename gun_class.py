@@ -21,9 +21,17 @@ bulletRotList = []
 bulletEndPosListX = []
 bulletEndPosListY = []
 
+def rotateAroundCircleX(rect,angle,radius):
+    x = rect.x + 50 + math.cos(-angle - 0.25) * radius
+    return x
+
+def rotateAroundCircleY(rect,angle,radius):
+    y = rect.y + 50 - math.sin(-angle - 0.25) * radius
+    return y
+
 class gunLogic:
 
-    def __init__(self,M1Pressed,playerRect,bulletSpeed,Tick,fireRate,rotation,lineEnd):
+    def __init__(self,M1Pressed,playerRect,bulletSpeed,Tick,fireRate,rotation,lineEnd,rads,rotX,rotY,dist):
         self.M1Pressed = M1Pressed
         self.playerRect = playerRect
         self.bulletSpeed = bulletSpeed
@@ -31,9 +39,21 @@ class gunLogic:
         self.fireRate = fireRate
         self.rotation = rotation
         self.lineEnd = lineEnd
+        self.rads = rads
+        self.rotX = rotX
+        self.rotY = rotY
+        self.dist = dist
         
-
-    def test(self,M1Pressed,playerRect,Tick,fireRate,rotation,lineEnd,bulletSpeed):
+    def playerData(self,rads,playerRect,rotX,rotY,dist):
+        gunPosX = rotateAroundCircleX(playerRect,rads,30)
+        gunPosY = rotateAroundCircleY(playerRect,rads,30)
+        bulletRect.x = gunPosX
+        bulletRect.y = gunPosY
+        endX = (bulletRect.x + rotX * dist)
+        endY = (bulletRect.y + rotY * dist)
+        self.lineEnd = endX, endY
+    
+    def bulletLogic(self,M1Pressed,Tick,fireRate,rotation,bulletSpeed,playerRect):
         now = Tick
         bulletRect = playerRect
         if (M1Pressed):
@@ -43,8 +63,8 @@ class gunLogic:
                 bulletXlist.append(bulletRect.x)
                 bulletYlist.append(bulletRect.y)
                 bulletRotList.append(rotation)
-                bulletEndPosListX.append(lineEnd[0])
-                bulletEndPosListY.append(lineEnd[1])
+                bulletEndPosListX.append(self.lineEnd[0])
+                bulletEndPosListY.append(self.lineEnd[1])
 
         for x in range(len(bulletXlist)):
             dx = (bulletEndPosListX[x] - bulletXlist[x])

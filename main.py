@@ -43,6 +43,10 @@ circleRotation = 0
 rightMouseFrame = 0
 leftMouseFrame = 0
 
+TrotX = 0
+TrotY = 0
+Tdist = 0
+
 gunSurface = pygame.Surface((10,10))
 gunRect = gunSurface.get_rect()
 gunRect.x = playerRect.x
@@ -61,16 +65,7 @@ WHITE = (255,255,255)
 
 bullet1 = pygame.image.load("x/bullet1.png")
 
-guns = gunLogic(M_pressed,gunRect,bulletSpeed,current_frame,fireRate,Tangle_degrees,lineEnd)
-
-def rotateLines(origin, point, angle):
-    ox, oy = origin
-    px, py = point
-    cos_angle = math.cos(angle)
-    sin_angle = math.sin(angle)
-    qx = ox + cos_angle * (px - ox) - sin_angle * (py - oy)
-    qy = oy + sin_angle * (px - ox) + cos_angle * (py - oy)
-    return (qx, qy)
+guns = gunLogic(M_pressed,gunRect,bulletSpeed,current_frame,fireRate,Tangle_degrees,lineEnd,Tangle_radians,TrotX,TrotY,Tdist)
 
 def rotateAroundCircleX(rect,angle,radius):
     x = rect.x + 50 + math.cos(-angle - 0.25) * radius
@@ -93,23 +88,6 @@ while True:
 
     mouse_buttons = pygame.mouse.get_pressed()
     M_pressed = mouse_buttons[0]
-    
-    if event.type == pygame.MOUSEBUTTONDOWN:
-        if event.button == 3:
-            rightMouseFrame = current_frame
-
-    if event.type == pygame.MOUSEBUTTONUP:
-        if event.button == 3:
-            leftMouseFrame = current_frame
-
-    if mouse_buttons[2]:
-        angleOffset = (baseLineAngle + (0.035 * (current_frame - rightMouseFrame)))
-        if (angleOffset >= 3.05):
-            angleOffset =  3.05
-        
-    if not mouse_buttons[2] and angleOffset >= baseLineAngle:
-        if angleOffset >= baseLineAngle:
-            angleOffset -= (0.005 * (current_frame - leftMouseFrame))
 
     keys = pygame.key.get_pressed()
     if keys[pygame.K_a] and keys[pygame.K_w]:
@@ -155,27 +133,10 @@ while True:
     gunRect.x = gunPosX
     gunRect.y = gunPosY
 
-    gunLineX = rotateAroundCircleX(playerRect,Tangle_radians,35)
-    gunLineY = rotateAroundCircleY(playerRect,Tangle_radians,35)
-    
-    endX = (playerRect.x + TrotX * Tdist)
-    endY = (playerRect.y + TrotY * Tdist)
-    lineStart = (((gunLineX),(gunLineY)))
-    lineEnd = endX, endY
-
-    line1_end = rotateLines(lineEnd, lineStart, angleOffset)
-    line2_end = rotateLines(lineEnd, lineStart, -angleOffset)
-
-    #pygame.draw.line(screen, BLACK, lineStart, lineEnd, 2)
-    pygame.draw.line(screen, BLACK, lineStart, line1_end, 2)
-    pygame.draw.line(screen, BLACK, lineStart, line2_end, 2)
-    
-    #screen.blit(gunSurface,(gunPosX,gunPosY)) 
-    #pygame.draw.rect(screen, (255, 0, 0),gunRect , 2)
-
     screen.blit(rotated_player_image, playerRoatedRect.topleft)
     
-    guns.test(M_pressed,gunRect,current_frame,fireRate,Tangle_degrees,lineEnd,bulletSpeed)
+    guns.playerData(Tangle_radians,playerRect,TrotX,TrotY,Tdist)
+    guns.bulletLogic(M_pressed,current_frame,fireRate,Tangle_degrees,bulletSpeed,gunRect)
     guns.blitBullets()
 
     pygame.display.update()
