@@ -131,7 +131,6 @@ while True:
     else:
         Current_Direction = Directions.InValid
 
-    
     mouse_x, mouse_y = pygame.mouse.get_pos()
     playerList = p.MovePlayer(Current_Direction)
     playerMoveX = (playerList[0] * MoveSpeed)
@@ -145,7 +144,7 @@ while True:
     TdirY = (TrotY / Tdist) + 0.00000000001
     Tangle_radians = math.atan2(TrotY, TrotX)
     Tangle_degrees = math.degrees(Tangle_radians)
-
+    
     rotated_player_image = pygame.transform.rotate(player_1,-Tangle_degrees)
     playerRoatedRect = rotated_player_image.get_rect(center=playerRect.center)
     playerMask = pygame.mask.from_surface(rotated_player_image)
