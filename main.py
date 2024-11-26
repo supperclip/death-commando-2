@@ -37,11 +37,6 @@ p = player(Current_Direction,current_frame)
 #gun data:
 bulletSpeed = 15
 fireRate = 6
-angleOffset = 2.7
-baseLineAngle = 2.7
-circleRotation = 0
-rightMouseFrame = 0
-leftMouseFrame = 0
 
 TrotX = 0
 TrotY = 0
@@ -76,7 +71,7 @@ def rotateAroundCircleY(rect,angle,radius):
     return y
 
 while True:
-
+    
     current_frame += 1
     
     screen.blit(background, (0, 0))  

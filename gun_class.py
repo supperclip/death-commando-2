@@ -2,6 +2,7 @@ import pygame
 import sys
 from pygame.locals import QUIT
 import math
+import random
 
 pygame.init()
 
@@ -31,7 +32,7 @@ def rotateAroundCircleY(rect,angle,radius):
 
 class gunLogic:
 
-    def __init__(self,M1Pressed,playerRect,bulletSpeed,Tick,fireRate,rotation,lineEnd,rads,rotX,rotY,dist):
+    def __init__(self,M1Pressed,playerRect,bulletSpeed,Tick,fireRate,rotation,lineEnd,rads,rotX,rotY,dist,):
         self.M1Pressed = M1Pressed
         self.playerRect = playerRect
         self.bulletSpeed = bulletSpeed
@@ -44,13 +45,15 @@ class gunLogic:
         self.rotY = rotY
         self.dist = dist
         
-    def playerData(self,rads,playerRect,rotX,rotY,dist):
+    def playerData(self,rads,playerRect,rotX,rotY,dist,):
         gunPosX = rotateAroundCircleX(playerRect,rads,30)
         gunPosY = rotateAroundCircleY(playerRect,rads,30)
         bulletRect.x = gunPosX
         bulletRect.y = gunPosY
         endX = (bulletRect.x + rotX * dist)
         endY = (bulletRect.y + rotY * dist)
+        endX += random.randint(-100,100)
+        endY += random.randint(-100,100)
         self.lineEnd = endX, endY
     
     def bulletLogic(self,M1Pressed,Tick,fireRate,rotation,bulletSpeed,playerRect):
@@ -81,11 +84,10 @@ class gunLogic:
     
     def blitBullets(self):
         index = []
-        
         if (len(bulletXlist) >= 1):
             for x in range(len(bulletXlist)):
-                
                 rotatedBullet = pygame.transform.rotate(bullet1, (-bulletRotList[x] + 90))
+                
 
                 bulletRect.x = bulletXlist[x]
                 bulletRect.y = bulletYlist[x]
