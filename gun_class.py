@@ -30,9 +30,17 @@ def rotateAroundCircleY(rect,angle,radius):
     y = rect.y + 50 - math.sin(-angle - 0.25) * radius
     return y
 
+def Animation(current_frame,maxFrames,inputFrame,time):
+    frame = inputFrame
+    if (current_frame % time == 0):
+        frame += 1
+    if (frame > maxFrames):
+        frame = 0
+    return frame
+
 class gunLogic:
 
-    def __init__(self,M1Pressed,playerRect,bulletSpeed,Tick,fireRate,rotation,lineEnd,rads,rotX,rotY,dist,):
+    def __init__(self,M1Pressed,playerRect,bulletSpeed,Tick,fireRate,rotation,lineEnd,rads,rotX,rotY,dist,recoil):
         self.M1Pressed = M1Pressed
         self.playerRect = playerRect
         self.bulletSpeed = bulletSpeed
@@ -44,16 +52,17 @@ class gunLogic:
         self.rotX = rotX
         self.rotY = rotY
         self.dist = dist
-        
-    def playerData(self,rads,playerRect,rotX,rotY,dist,):
+        self.recoil = recoil
+    
+    def playerData(self,rads,playerRect,rotX,rotY,dist,recoil):
         gunPosX = rotateAroundCircleX(playerRect,rads,30)
         gunPosY = rotateAroundCircleY(playerRect,rads,30)
         bulletRect.x = gunPosX
         bulletRect.y = gunPosY
         endX = (bulletRect.x + rotX * dist)
         endY = (bulletRect.y + rotY * dist)
-        endX += random.randint(-100,100)
-        endY += random.randint(-100,100)
+        endX += (endX * random.uniform(recoil[0],recoil[1]))
+        endY += (endY * random.uniform(recoil[0],recoil[1]))
         self.lineEnd = endX, endY
     
     def bulletLogic(self,M1Pressed,Tick,fireRate,rotation,bulletSpeed,playerRect):
@@ -87,7 +96,6 @@ class gunLogic:
         if (len(bulletXlist) >= 1):
             for x in range(len(bulletXlist)):
                 rotatedBullet = pygame.transform.rotate(bullet1, (-bulletRotList[x] + 90))
-                
 
                 bulletRect.x = bulletXlist[x]
                 bulletRect.y = bulletYlist[x]

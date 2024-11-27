@@ -32,20 +32,37 @@ playerRect = player_1.get_rect()
 playerShoot1 = pygame.image.load("x/player_shoot_1.png").convert_alpha()
 playerShoot1 = pygame.transform.rotate(playerShoot1, 90)
 
-p = player(Current_Direction,current_frame)
+playerFlex1 = pygame.image.load("x/player_FLEX_1.png")
+playerFlex1 = pygame.transform.rotate(playerFlex1, 90)
+
+playerFlexShoot1 = pygame.image.load("x/player_FLEX_shoot1.png")
+playerFlexShoot1 = pygame.transform.rotate(playerFlexShoot1, 90)
+
+playerFlexShoot2 = pygame.image.load("x/player_FLEX_shoot2.png")
+playerFlexShoot2 = pygame.transform.rotate(playerFlexShoot2, 90)
+
+playerFlexShoot3 = pygame.image.load("x/player_FLEX_shoot3.png")
+playerFlexShoot3 = pygame.transform.rotate(playerFlexShoot3, 90)
+
+FLEXList = [playerFlex1,playerFlexShoot1,playerFlexShoot2,playerFlexShoot3]
 
 #gun data:
-bulletSpeed = 15
+bulletSpeed = 17
 fireRate = 6
+
+currentGun = "FLEX raider MK1"
 
 TrotX = 0
 TrotY = 0
 Tdist = 0
+Tangle_degrees = 0
 
 gunSurface = pygame.Surface((10,10))
 gunRect = gunSurface.get_rect()
 gunRect.x = playerRect.x
 gunRect.y = playerRect.y
+
+recoil = [0.5,1.5]
 
 lineEnd = 0
 
@@ -60,7 +77,8 @@ WHITE = (255,255,255)
 
 bullet1 = pygame.image.load("x/bullet1.png")
 
-guns = gunLogic(M_pressed,gunRect,bulletSpeed,current_frame,fireRate,Tangle_degrees,lineEnd,Tangle_radians,TrotX,TrotY,Tdist)
+guns = gunLogic(M_pressed,gunRect,bulletSpeed,current_frame,fireRate,Tangle_degrees,lineEnd,Tangle_radians,TrotX,TrotY,Tdist,recoil)
+p = player(Current_Direction,current_frame)
 
 def rotateAroundCircleX(rect,angle,radius):
     x = rect.x + 50 + math.cos(-angle - 0.25) * radius
@@ -69,6 +87,18 @@ def rotateAroundCircleX(rect,angle,radius):
 def rotateAroundCircleY(rect,angle,radius):
     y = rect.y + 50 - math.sin(-angle - 0.25) * radius
     return y
+
+def GunFunction(gun):
+    if (gun == "FLEX raider MK1"):
+        bulletSpeed = 17
+        fireRate = 6
+        animationList = FLEXList
+    
+def Delay(inputFrame,frame,delay):
+    if (inputFrame == (frame + delay)):
+        return True
+    else:
+        return False
 
 while True:
     
@@ -130,7 +160,7 @@ while True:
 
     screen.blit(rotated_player_image, playerRoatedRect.topleft)
     
-    guns.playerData(Tangle_radians,playerRect,TrotX,TrotY,Tdist)
+    guns.playerData(Tangle_radians,playerRect,TrotX,TrotY,Tdist,recoil)
     guns.bulletLogic(M_pressed,current_frame,fireRate,Tangle_degrees,bulletSpeed,gunRect)
     guns.blitBullets()
 
