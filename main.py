@@ -32,6 +32,12 @@ playerRect = player_1.get_rect()
 playerShoot1 = pygame.image.load("x/player_shoot_1.png").convert_alpha()
 playerShoot1 = pygame.transform.rotate(playerShoot1, 90)
 
+playerShoot2 = pygame.image.load("x/player_shoot_2.png").convert_alpha()
+playerShoot2 = pygame.transform.rotate(playerShoot2, 90)
+
+playerShoot3 = pygame.image.load("x/player_shoot_3.png").convert_alpha()
+playerShoot3 = pygame.transform.rotate(playerShoot3, 90)
+
 playerFlex1 = pygame.image.load("x/player_FLEX_1.png")
 playerFlex1 = pygame.transform.rotate(playerFlex1, 90)
 
@@ -45,6 +51,9 @@ playerFlexShoot3 = pygame.image.load("x/player_FLEX_shoot3.png")
 playerFlexShoot3 = pygame.transform.rotate(playerFlexShoot3, 90)
 
 FLEXList = [playerFlex1,playerFlexShoot1,playerFlexShoot2,playerFlexShoot3]
+ravagerMK1List = [player_1,playerShoot1,playerShoot2,playerShoot3]
+
+playerSprites = FLEXList
 
 #gun data:
 bulletSpeed = 17
@@ -77,7 +86,7 @@ WHITE = (255,255,255)
 
 bullet1 = pygame.image.load("x/bullet1.png")
 
-guns = gunLogic(M_pressed,gunRect,bulletSpeed,current_frame,fireRate,Tangle_degrees,lineEnd,Tangle_radians,TrotX,TrotY,Tdist,recoil)
+guns = gunLogic(M_pressed,gunRect,bulletSpeed,current_frame,fireRate,Tangle_degrees,lineEnd,Tangle_radians,TrotX,TrotY,Tdist,recoil,playerSprites)
 p = player(Current_Direction,current_frame)
 
 def rotateAroundCircleX(rect,angle,radius):
@@ -158,11 +167,12 @@ while True:
     gunRect.x = gunPosX
     gunRect.y = gunPosY
 
-    screen.blit(rotated_player_image, playerRoatedRect.topleft)
+    #screen.blit(rotated_player_image, playerRoatedRect.topleft)
     
     guns.playerData(Tangle_radians,playerRect,TrotX,TrotY,Tdist,recoil)
     guns.bulletLogic(M_pressed,current_frame,fireRate,Tangle_degrees,bulletSpeed,gunRect)
     guns.blitBullets()
+    guns.blitPlayer(playerSprites,M_pressed,Tangle_degrees,playerRect,current_frame)
 
     pygame.display.update()
     clock.tick(60)

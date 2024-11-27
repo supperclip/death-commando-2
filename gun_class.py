@@ -40,7 +40,7 @@ def Animation(current_frame,maxFrames,inputFrame,time):
 
 class gunLogic:
 
-    def __init__(self,M1Pressed,playerRect,bulletSpeed,Tick,fireRate,rotation,lineEnd,rads,rotX,rotY,dist,recoil):
+    def __init__(self,M1Pressed,playerRect,bulletSpeed,Tick,fireRate,rotation,lineEnd,rads,rotX,rotY,dist,recoil,playerSprites):
         self.M1Pressed = M1Pressed
         self.playerRect = playerRect
         self.bulletSpeed = bulletSpeed
@@ -53,6 +53,21 @@ class gunLogic:
         self.rotY = rotY
         self.dist = dist
         self.recoil = recoil
+        self.playerSprites = playerSprites
+        self.gunAnimationFrame = 0
+    
+    def blitPlayer(self,playerSprites,M1Pressed,rads,playerRect,Tick):
+        if (M1Pressed):
+            self.gunAnimationFrame = 0 + Animation(Tick,2,self.gunAnimationFrame,10)
+            playerSprite = playerSprites[self.gunAnimationFrame + 1]
+            rotated_player_image = pygame.transform.rotate(playerSprite,-rads)
+            playerRoatedRect = rotated_player_image.get_rect(center=playerRect.center)
+            screen.blit(rotated_player_image,playerRoatedRect)
+        if not (M1Pressed):
+            playerSprite = playerSprites[0]
+            rotated_player_image = pygame.transform.rotate(playerSprite,-rads)
+            playerRoatedRect = rotated_player_image.get_rect(center=playerRect.center)
+            screen.blit(rotated_player_image,playerRoatedRect)
     
     def playerData(self,rads,playerRect,rotX,rotY,dist,recoil):
         gunPosX = rotateAroundCircleX(playerRect,rads,30)
