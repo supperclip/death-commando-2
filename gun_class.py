@@ -55,6 +55,8 @@ class gunLogic:
         self.recoil = recoil
         self.playerSprites = playerSprites
         self.gunAnimationFrame = 0
+        self.playerSurface = 0
+        self.newPlayerRect = 0
     
     def blitPlayer(self,playerSprites,M1Pressed,rads,playerRect,Tick):
         if (M1Pressed):
@@ -68,6 +70,8 @@ class gunLogic:
             rotated_player_image = pygame.transform.rotate(playerSprite,-rads)
             playerRoatedRect = rotated_player_image.get_rect(center=playerRect.center)
             screen.blit(rotated_player_image,playerRoatedRect)
+        self.playerSurface = rotated_player_image
+        self.newPlayerRect = playerRoatedRect
     
     def playerData(self,rads,playerRect,rotX,rotY,dist,recoil):
         gunPosX = rotateAroundCircleX(playerRect,rads,30)
@@ -126,3 +130,9 @@ class gunLogic:
                 del bulletRotList[index]  
                 del bulletEndPosListX[index]
                 del bulletEndPosListY[index]
+
+    def returnPlayerSurface(self):
+        return self.playerSurface
+    
+    def returnPlayerRect(self):
+        return self.newPlayerRect

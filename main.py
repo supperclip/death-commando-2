@@ -6,6 +6,8 @@ import math
 from player_class import player
 from player_class import Directions
 from gun_class import gunLogic
+from enemy_class import EnemyLogic
+from enemy_class import States
 
 pygame.init()
 screen = pygame.display.set_mode((1000, 700))
@@ -16,14 +18,6 @@ background = pygame.image.load("x/background.png")
 
 current_frame = 0
 Tangle_degrees = 0
-
-
-#player data
-Current_Direction = Directions.InValid
-MoveSpeed = 0.8
-Tangle_radians = 0
-
-M_pressed = False
 
 player_1 = pygame.image.load("x/player_1.png")
 player_1 = pygame.transform.rotate(player_1, 90)
@@ -55,6 +49,15 @@ ravagerMK1List = [player_1,playerShoot1,playerShoot2,playerShoot3]
 
 playerSprites = FLEXList
 
+#player data
+Current_Direction = Directions.InValid
+MoveSpeed = 0.8
+Tangle_radians = 0
+
+M_pressed = False
+
+playerMask = pygame.mask.from_surface(player_1)
+
 #gun data:
 bulletSpeed = 17
 fireRate = 6
@@ -79,6 +82,14 @@ crosshair = pygame.image.load("x/crosshair.png")
 crosshair = pygame.transform.scale(crosshair, (35, 35))
 cursor = pygame.cursors.Cursor((17,17), crosshair)
 pygame.mouse.set_cursor(cursor)
+
+#enemy data:
+state = States.Moving
+enemyX = random.randint(0,1000)
+enemyY = 0
+enemySpeed = 1
+
+enemyList = []
 
 
 BLACK = (0,0,0)
@@ -156,10 +167,6 @@ while True:
     TdirY = (TrotY / Tdist) + 0.00000000001
     Tangle_radians = math.atan2(TrotY, TrotX)
     Tangle_degrees = math.degrees(Tangle_radians)
-    
-    rotated_player_image = pygame.transform.rotate(player_1,-Tangle_degrees)
-    playerRoatedRect = rotated_player_image.get_rect(center=playerRect.center)
-    playerMask = pygame.mask.from_surface(rotated_player_image)
 
     gunPosX = rotateAroundCircleX(playerRect,Tangle_radians,30)
     gunPosY = rotateAroundCircleY(playerRect,Tangle_radians,30)
@@ -173,6 +180,17 @@ while True:
     guns.bulletLogic(M_pressed,current_frame,fireRate,Tangle_degrees,bulletSpeed,gunRect)
     guns.blitBullets()
     guns.blitPlayer(playerSprites,M_pressed,Tangle_degrees,playerRect,current_frame)
+    playerMask = pygame.mask.from_surface(guns.returnPlayerSurface())
+    playerRect = guns.returnPlayerRect()
 
+    if (current_frame % 110 == 0):
+        enemyList.append(EnemyLogic(state,enemyX,enemyY,playerRect,enemySpeed,current_frame,playerMask))
+
+    if (len(enemyList) >= 1 ):
+        for x in range(len(enemyList)):
+            enemy = enemyList[x]
+            enemy.moveEnemy(state,playerRect,enemySpeed,current_frame)
+            enemy.detectPlayerHit(playerMask,playerRect)
+            
     pygame.display.update()
     clock.tick(60)
