@@ -92,7 +92,7 @@ class EnemyLogic:
                 self.hookPointData = GetRotationAngle(player,coords)
 
         if (self.state == States.Attacking):
-            speed = speed * 2.25
+            speed = speed * 2.65
             self.X = MoveEnemyX(self.hookPointData[0], self.hookPointData[1],self.X, speed)
             self.Y = MoveEnemyY(self.hookPointData[0], self.hookPointData[1],self.Y, speed)
 
@@ -120,8 +120,8 @@ class EnemyLogic:
         #print(self.dist)
 
     def getEnemyState(self,tick):
-        if (self.dist <= 2 and not self.doingLogic):
+        if (self.dist <= 4 and not self.doingLogic):
             self.state = States.notMoving
             self.last_tick = tick
-        if (self.dist >= 2 and not self.doingLogic):
+        if (self.dist >= 4 and not self.doingLogic):
             self.state = States.Moving

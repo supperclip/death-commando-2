@@ -92,7 +92,7 @@ enemyX = random.randint(0,1000)
 enemyY = 0
 enemySpeed = 1.1
 enemyWindUpCooldown = 45
-enemyAttackCooldown = 60
+enemyAttackCooldown = 75
 
 enemyList = []
 
@@ -191,7 +191,8 @@ while True:
 
     #pygame.draw.rect(screen,BLACK,playerPathFindRect)
 
-    if (current_frame == 1):
+    if (current_frame % 110 == 0):
+        enemyX = random.randint(0,1000)
         enemyList.append(EnemyLogic(enemyX,enemyY,playerRect,enemySpeed,current_frame,playerMask,enemyWindUpCooldown,enemyAttackCooldown))
 
     if (len(enemyList) >= 1 ):
