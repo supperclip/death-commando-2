@@ -15,26 +15,27 @@ class Directions(Enum):
     DownAndLeft = 8
 
 class player:
-    def __init__(self,PlayerDirection,tick):
+    def __init__(self,PlayerDirection,tick,speed):
         self.PlayerDirection = PlayerDirection
         self.last_tick = tick
+        self.speed = speed
     
-    def MovePlayer(self, PlayerDirection):
+    def MovePlayer(self, PlayerDirection,speed):
         if PlayerDirection == Directions.InValid:
-            return [0,0]
+            return [0 * speed,0 * speed]
         if PlayerDirection == Directions.UpAndLeft:
-            return [-1,-1]
+            return [-1 * speed,-1 * speed]
         if PlayerDirection == Directions.UpAndRight:
-            return [1,-1]
+            return [1 * speed,-1 * speed]
         if PlayerDirection == Directions.DownAndLeft:
-            return [-1,1]
+            return [-1 * speed,1 * speed]
         if PlayerDirection == Directions.DownAndRight:
-            return [1,1]
+            return [1 * speed,1 * speed]
         elif PlayerDirection == Directions.Right:
-            return [1,0]
+            return [1 * speed,0 * speed]
         elif PlayerDirection == Directions.Left:
-            return [-1,0]
+            return [-1 * speed,0 * speed]
         elif PlayerDirection == Directions.Up:
-            return [0,-1]
+            return [0 * speed,-1 * speed]
         elif PlayerDirection == Directions.Down:
-            return [0,1]
+            return [0 * speed,1 * speed]
