@@ -19,6 +19,9 @@ background = pygame.image.load("x/background.png")
 current_frame = 0
 Tangle_degrees = 0
 
+playerPathFindRect = pygame.surface.Surface((45,45))
+playerPathFindRect = playerPathFindRect.get_rect()
+
 player_1 = pygame.image.load("x/player_1.png")
 player_1 = pygame.transform.rotate(player_1, 90)
 playerRect = player_1.get_rect()
@@ -87,10 +90,11 @@ pygame.mouse.set_cursor(cursor)
 state = States.Moving
 enemyX = random.randint(0,1000)
 enemyY = 0
-enemySpeed = 1
+enemySpeed = 1.1
+enemyWindUpCooldown = 45
+enemyAttackCooldown = 60
 
 enemyList = []
-
 
 BLACK = (0,0,0)
 WHITE = (255,255,255)
@@ -168,13 +172,15 @@ while True:
     Tangle_radians = math.atan2(TrotY, TrotX)
     Tangle_degrees = math.degrees(Tangle_radians)
 
+    playerPathFindRect.center = playerRect.center 
+
     gunPosX = rotateAroundCircleX(playerRect,Tangle_radians,30)
     gunPosY = rotateAroundCircleY(playerRect,Tangle_radians,30)
 
     gunRect.x = gunPosX
     gunRect.y = gunPosY
 
-    #screen.blit(rotated_player_image, playerRoatedRect.topleft)
+    #screen.blit(rotated_player_image, playerRoatedRect.topleft)]
     
     guns.playerData(Tangle_radians,playerRect,TrotX,TrotY,Tdist,recoil)
     guns.bulletLogic(M_pressed,current_frame,fireRate,Tangle_degrees,bulletSpeed,gunRect)
@@ -183,14 +189,18 @@ while True:
     playerMask = pygame.mask.from_surface(guns.returnPlayerSurface())
     playerRect = guns.returnPlayerRect()
 
-    if (current_frame % 110 == 0):
-        enemyList.append(EnemyLogic(state,enemyX,enemyY,playerRect,enemySpeed,current_frame,playerMask))
+    #pygame.draw.rect(screen,BLACK,playerPathFindRect)
+
+    if (current_frame == 1):
+        enemyList.append(EnemyLogic(enemyX,enemyY,playerRect,enemySpeed,current_frame,playerMask,enemyWindUpCooldown,enemyAttackCooldown))
 
     if (len(enemyList) >= 1 ):
         for x in range(len(enemyList)):
             enemy = enemyList[x]
-            enemy.moveEnemy(state,playerRect,enemySpeed,current_frame)
+            enemy.moveEnemy(playerPathFindRect,enemySpeed,current_frame)
             enemy.detectPlayerHit(playerMask,playerRect)
+            enemy.getDistanceFromPlayer(playerRect)
+            enemy.getEnemyState(current_frame)
             
     pygame.display.update()
     clock.tick(60)

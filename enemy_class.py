@@ -52,33 +52,76 @@ class States(Enum):
 
 class EnemyLogic:
 
-    def __init__(self,state,X,Y,player,speed,tick,playerMask):
-        self.state = state
+    def __init__(self,X,Y,player,speed,tick,playerMask,enemyWindUpCooldown,enemyAttackCooldown):
+        self.state = States.Moving
         self.X = X
         self.Y = Y
-        self.Player = player
+        self.player = player
         self.speed = speed
         self.animationFrame = 0
         self.tick = tick
         self.playerMask = playerMask
         self.mask = 0
         self.rect = 0
+        self.dist = 0
+        self.doingLogic = False
+        self.last_tick = tick
+        self.enemyWindUpCooldown = enemyWindUpCooldown
+        self.enemyAttackCooldown = enemyAttackCooldown
+        self.hookPointData = None
 
-    def moveEnemy(self,state,player,speed,tick):
+    def moveEnemy(self,player,speed,tick):
         coords = [self.X,self.Y]
-
+        now = tick
         self.animationFrame = Animation(tick,1,self.animationFrame,25)
         enemySurface = enemyAnimationList[self.animationFrame]
-        if (state == States.Moving):
-            enemyRotData = GetRotationAngle(player,coords)
+        enemyRotData = GetRotationAngle(player,coords)
+        if (self.state == States.Moving):
             self.X = MoveEnemyX(enemyRotData[0], enemyRotData[1],self.X, speed)
             self.Y = MoveEnemyY(enemyRotData[0], enemyRotData[1],self.Y, speed)
-            enemyRoated = pygame.transform.rotate(enemySurface, -enemyRotData[2])
-            enemyRect = enemyRoated.get_rect(center=(self.X,self.Y))
-            self.mask = pygame.mask.from_surface(enemyRoated)
-            self.rect = enemyRect
+
+        if (self.state == States.notMoving):
+            self.doingLogic = True
+            speed = speed * 1.75
+            self.X = MoveEnemyX(enemyRotData[0], enemyRotData[1],self.X, -speed)
+            self.Y = MoveEnemyY(enemyRotData[0], enemyRotData[1],self.Y, -speed)
+
+            if (now - self.last_tick) >= self.enemyWindUpCooldown:
+                self.last_tick = now
+                self.state = States.Attacking
+                self.hookPointData = GetRotationAngle(player,coords)
+
+        if (self.state == States.Attacking):
+            speed = speed * 2.25
+            self.X = MoveEnemyX(self.hookPointData[0], self.hookPointData[1],self.X, speed)
+            self.Y = MoveEnemyY(self.hookPointData[0], self.hookPointData[1],self.Y, speed)
+
+            if (now - self.last_tick) >= self.enemyAttackCooldown:
+                self.last_tick = now
+                self.doingLogic = False
+
+        enemyRoated = pygame.transform.rotate(enemySurface, -enemyRotData[2])
+        enemyRect = enemyRoated.get_rect(center=(self.X,self.Y))
+        self.mask = pygame.mask.from_surface(enemyRoated)
+        self.rect = enemyRect
+
         screen.blit(enemyRoated,enemyRect)
 
     def detectPlayerHit(self,playerMask,player):
-        if playerMask.overlap(self.mask,(self.rect.x - player.centerx,self.rect.y - player.centery)):
+        if self.mask.overlap(playerMask,(self.rect.x - player.centerx,self.rect.y - player.centery)):
             print("test")
+
+    def getDistanceFromPlayer(self,player):
+        rotX = self.rect.x - player.centerx 
+        rotY = self.rect.y - player.centery
+        self.dist = math.hypot(rotX, rotY) + 0.000001
+        self.dist -= 80
+        self.dist = (self.dist / 20)
+        #print(self.dist)
+
+    def getEnemyState(self,tick):
+        if (self.dist <= 2 and not self.doingLogic):
+            self.state = States.notMoving
+            self.last_tick = tick
+        if (self.dist >= 2 and not self.doingLogic):
+            self.state = States.Moving
