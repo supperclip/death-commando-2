@@ -8,6 +8,7 @@ from player_class import Directions
 from gun_class import gunLogic
 from enemy_class import EnemyLogic
 from enemy_class import States
+from enemy_class import Gargoyle
 
 pygame.init()
 screen = pygame.display.set_mode((1000, 700))
@@ -54,7 +55,7 @@ playerSprites = FLEXList
 
 #player data
 Current_Direction = Directions.InValid
-MoveSpeed = 0.8
+MoveSpeed = 1.2
 Tangle_radians = 0
 
 M_pressed = False
@@ -91,7 +92,7 @@ state = States.Moving
 enemyX = random.randint(0,1000)
 enemyY = 0
 enemySpeed = 1.1
-enemyWindUpCooldown = 45
+enemyWindUpCooldown = 35
 enemyAttackCooldown = 75
 
 enemyList = []
@@ -102,7 +103,7 @@ WHITE = (255,255,255)
 bullet1 = pygame.image.load("x/bullet1.png")
 
 guns = gunLogic(M_pressed,gunRect,bulletSpeed,current_frame,fireRate,Tangle_degrees,lineEnd,Tangle_radians,TrotX,TrotY,Tdist,recoil,playerSprites)
-p = player(Current_Direction,current_frame)
+p = player(Current_Direction,current_frame,MoveSpeed)
 
 def rotateAroundCircleX(rect,angle,radius):
     x = rect.x + 50 + math.cos(-angle - 0.25) * radius
@@ -159,7 +160,7 @@ while True:
         Current_Direction = Directions.InValid
 
     mouse_x, mouse_y = pygame.mouse.get_pos()
-    playerList = p.MovePlayer(Current_Direction)
+    playerList = p.MovePlayer(Current_Direction,MoveSpeed)
     playerMoveX = (playerList[0] * MoveSpeed)
     playerMoveY = (playerList[1] * MoveSpeed)
     playerRect.x += playerMoveX
@@ -180,7 +181,7 @@ while True:
     gunRect.x = gunPosX
     gunRect.y = gunPosY
 
-    #screen.blit(rotated_player_image, playerRoatedRect.topleft)]
+    #screen.blit(rotated_player_image, playerRoatedRect.topleft)
     
     guns.playerData(Tangle_radians,playerRect,TrotX,TrotY,Tdist,recoil)
     guns.bulletLogic(M_pressed,current_frame,fireRate,Tangle_degrees,bulletSpeed,gunRect)
@@ -191,9 +192,9 @@ while True:
 
     #pygame.draw.rect(screen,BLACK,playerPathFindRect)
 
-    if (current_frame % 110 == 0):
+    if (current_frame % 120 == 0):
         enemyX = random.randint(0,1000)
-        enemyList.append(EnemyLogic(enemyX,enemyY,playerRect,enemySpeed,current_frame,playerMask,enemyWindUpCooldown,enemyAttackCooldown))
+        enemyList.append(Gargoyle(enemyX,enemyY,playerRect,enemySpeed,current_frame,playerMask,enemyWindUpCooldown,enemyAttackCooldown))
 
     if (len(enemyList) >= 1 ):
         for x in range(len(enemyList)):
@@ -202,6 +203,6 @@ while True:
             enemy.detectPlayerHit(playerMask,playerRect)
             enemy.getDistanceFromPlayer(playerRect)
             enemy.getEnemyState(current_frame)
-            
+
     pygame.display.update()
     clock.tick(60)
