@@ -6,8 +6,10 @@ import math
 from player_class import player
 from player_class import Directions
 from gun_class import gunLogic
+from gun_class import bulletLogic
 from enemy_class import EnemyLogic
 from enemy_class import States
+from enemy_class import Gargoyle
 
 pygame.init()
 screen = pygame.display.set_mode((1000, 700))
@@ -18,6 +20,9 @@ background = pygame.image.load("x/background.png")
 
 current_frame = 0
 Tangle_degrees = 0
+
+testSurface = pygame.Surface((20,20))
+testSurface.fill("black")
 
 playerPathFindRect = pygame.surface.Surface((45,45))
 playerPathFindRect = playerPathFindRect.get_rect()
@@ -47,6 +52,9 @@ playerFlexShoot2 = pygame.transform.rotate(playerFlexShoot2, 90)
 playerFlexShoot3 = pygame.image.load("x/player_FLEX_shoot3.png")
 playerFlexShoot3 = pygame.transform.rotate(playerFlexShoot3, 90)
 
+bullet1 = pygame.image.load("x/bullet1.png")
+bulletMask = pygame.mask.from_surface(bullet1)
+
 FLEXList = [playerFlex1,playerFlexShoot1,playerFlexShoot2,playerFlexShoot3]
 ravagerMK1List = [player_1,playerShoot1,playerShoot2,playerShoot3]
 
@@ -54,7 +62,7 @@ playerSprites = FLEXList
 
 #player data
 Current_Direction = Directions.InValid
-MoveSpeed = 0.8
+MoveSpeed = 1.2
 Tangle_radians = 0
 
 M_pressed = False
@@ -62,7 +70,9 @@ M_pressed = False
 playerMask = pygame.mask.from_surface(player_1)
 
 #gun data:
-bulletSpeed = 17
+bulletList = []
+
+bulletSpeed = 8
 fireRate = 6
 
 currentGun = "FLEX raider MK1"
@@ -77,7 +87,7 @@ gunRect = gunSurface.get_rect()
 gunRect.x = playerRect.x
 gunRect.y = playerRect.y
 
-recoil = [0.5,1.5]
+recoil = 35
 
 lineEnd = 0
 
@@ -88,11 +98,12 @@ pygame.mouse.set_cursor(cursor)
 
 #enemy data:
 state = States.Moving
-enemyX = random.randint(0,1000)
-enemyY = 0
-enemySpeed = 1.1
-enemyWindUpCooldown = 45
-enemyAttackCooldown = 75
+gargoyleX = random.randint(0,1000)
+gargoyleY = 0
+gargoyleSpeed = 1.1
+gargoyleWindUpCooldown = 35
+gargoyleAttackCooldown = 75
+gargoyleHealth = 25
 
 enemyList = []
 
@@ -102,7 +113,7 @@ WHITE = (255,255,255)
 bullet1 = pygame.image.load("x/bullet1.png")
 
 guns = gunLogic(M_pressed,gunRect,bulletSpeed,current_frame,fireRate,Tangle_degrees,lineEnd,Tangle_radians,TrotX,TrotY,Tdist,recoil,playerSprites)
-p = player(Current_Direction,current_frame)
+p = player(Current_Direction,current_frame,MoveSpeed)
 
 def rotateAroundCircleX(rect,angle,radius):
     x = rect.x + 50 + math.cos(-angle - 0.25) * radius
@@ -159,7 +170,7 @@ while True:
         Current_Direction = Directions.InValid
 
     mouse_x, mouse_y = pygame.mouse.get_pos()
-    playerList = p.MovePlayer(Current_Direction)
+    playerList = p.MovePlayer(Current_Direction,MoveSpeed)
     playerMoveX = (playerList[0] * MoveSpeed)
     playerMoveY = (playerList[1] * MoveSpeed)
     playerRect.x += playerMoveX
@@ -180,28 +191,41 @@ while True:
     gunRect.x = gunPosX
     gunRect.y = gunPosY
 
-    #screen.blit(rotated_player_image, playerRoatedRect.topleft)]
-    
-    guns.playerData(Tangle_radians,playerRect,TrotX,TrotY,Tdist,recoil)
-    guns.bulletLogic(M_pressed,current_frame,fireRate,Tangle_degrees,bulletSpeed,gunRect)
-    guns.blitBullets()
     guns.blitPlayer(playerSprites,M_pressed,Tangle_degrees,playerRect,current_frame)
     playerMask = pygame.mask.from_surface(guns.returnPlayerSurface())
-    playerRect = guns.returnPlayerRect()
 
-    #pygame.draw.rect(screen,BLACK,playerPathFindRect)
+    deleteIndex = []
 
-    if (current_frame % 110 == 0):
+    if guns.canShoot(current_frame, fireRate, M_pressed):
+        bulletObject = bulletLogic(gunPosX, gunPosY, TrotX, TrotY, recoil, Tdist, Tangle_degrees, bulletSpeed)
+        bulletObject.GetRoation()
+        bulletObject.SpawnBullet()
+        bulletList.append(bulletObject)
+
+    # In your game loop:
+    for x in range(len(bulletList)):
+        bullet = bulletList[x]
+        bullet.MoveBullet()
+        if (bullet.DeleteBullet()):
+            deleteIndex.append(x)
+
+    for index in sorted(deleteIndex):
+            del bulletList[index]
+
+    if (current_frame % 120 == 0):
         enemyX = random.randint(0,1000)
-        enemyList.append(EnemyLogic(enemyX,enemyY,playerRect,enemySpeed,current_frame,playerMask,enemyWindUpCooldown,enemyAttackCooldown))
+        enemyList.append(Gargoyle(gargoyleX,gargoyleY,playerRect,gargoyleSpeed,current_frame,playerMask,gargoyleWindUpCooldown,gargoyleAttackCooldown,gargoyleHealth))
 
     if (len(enemyList) >= 1 ):
         for x in range(len(enemyList)):
             enemy = enemyList[x]
-            enemy.moveEnemy(playerPathFindRect,enemySpeed,current_frame)
+            enemy.moveEnemy(playerPathFindRect,gargoyleSpeed,current_frame)
             enemy.detectPlayerHit(playerMask,playerRect)
             enemy.getDistanceFromPlayer(playerRect)
             enemy.getEnemyState(current_frame)
-            
+
+    #screen.blit(testSurface,(gunPosX,gunPosY))
+    #screen.blit(rotated_player_image, playerRoatedRect.topleft)
+
     pygame.display.update()
     clock.tick(60)

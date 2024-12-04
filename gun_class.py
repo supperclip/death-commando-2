@@ -38,6 +38,63 @@ def Animation(current_frame,maxFrames,inputFrame,time):
         frame = 0
     return frame
 
+
+class bulletLogic:
+    def __init__(self, gunPosX, gunPosY, rotX, rotY, recoil, dist, rotation, bulletSpeed):
+        self.gunPosX = gunPosX
+        self.gunPosY = gunPosY
+        self.rotX = rotX
+        self.rotY = rotY
+        self.recoil = recoil
+        self.dist = dist
+        self.rotation = rotation
+        self.bulletSpeed = bulletSpeed
+        self.bulletX = 0
+        self.bulletY = 0
+        self.dx = 0
+        self.dy = 0
+        self.rotatedBullet = None
+        self.bulletRect = pygame.Rect(0, 0, 10, 10)
+
+    def SpawnBullet(self):
+        self.bulletRect.x = self.gunPosX
+        self.bulletRect.y = self.gunPosY
+
+    def GetRoation(self):
+        recoilX = random.randint(-self.recoil, self.recoil)
+        recoilY = random.randint(-self.recoil, self.recoil)
+
+        rotY = self.rotY + recoilY
+        rotX = self.rotX + recoilX
+
+        endX = self.bulletRect.x + rotX * self.dist
+        endY = self.bulletRect.y + rotY * self.dist
+
+        self.dx = endX - self.bulletRect.x
+        self.dy = endY - self.bulletRect.y
+
+        distance = math.hypot(self.dx, self.dy)
+        if distance != 0:
+            self.dx /= distance
+            self.dy /= distance
+
+        self.dx *= self.bulletSpeed
+        self.dy *= self.bulletSpeed
+
+        self.rotatedBullet = pygame.transform.rotate(bullet1, (self.rotation - 270))  # Apply the rotation
+
+    def MoveBullet(self):
+        self.bulletRect.x += self.dx
+        self.bulletRect.y += self.dy
+
+        screen.blit(self.rotatedBullet, self.bulletRect)
+
+    def DeleteBullet(self):
+        if (self.bulletRect.x >= 1000 or self.bulletRect.x <= 0):
+            return True
+        if (self.bulletRect.y >= 700 or self.bulletRect.y <= 0):
+            return True
+    
 class gunLogic:
 
     def __init__(self,M1Pressed,playerRect,bulletSpeed,Tick,fireRate,rotation,lineEnd,rads,rotX,rotY,dist,recoil,playerSprites):
@@ -57,6 +114,7 @@ class gunLogic:
         self.gunAnimationFrame = 0
         self.playerSurface = 0
         self.newPlayerRect = 0
+        self.rotatedBullet = 0
     
     def blitPlayer(self,playerSprites,M1Pressed,rads,playerRect,Tick):
         if (M1Pressed):
@@ -72,64 +130,13 @@ class gunLogic:
             screen.blit(rotated_player_image,playerRoatedRect)
         self.playerSurface = rotated_player_image
         self.newPlayerRect = playerRoatedRect
-    
-    def playerData(self,rads,playerRect,rotX,rotY,dist,recoil):
-        gunPosX = rotateAroundCircleX(playerRect,rads,30)
-        gunPosY = rotateAroundCircleY(playerRect,rads,30)
-        bulletRect.x = gunPosX
-        bulletRect.y = gunPosY
-        endX = (bulletRect.x + rotX * dist)
-        endY = (bulletRect.y + rotY * dist)
-        endX += (endX * random.uniform(recoil[0],recoil[1]))
-        endY += (endY * random.uniform(recoil[0],recoil[1]))
-        self.lineEnd = endX, endY
-    
-    def bulletLogic(self,M1Pressed,Tick,fireRate,rotation,bulletSpeed,playerRect):
+
+    def canShoot(self,Tick,fireRate,M1Pressed):
         now = Tick
-        bulletRect = playerRect
         if (M1Pressed):
             if (now - self.last_tick) >= fireRate:
                 self.last_tick = now
-                pygame.mixer.Sound.play(rifleShot)
-                bulletXlist.append(bulletRect.x)
-                bulletYlist.append(bulletRect.y)
-                bulletRotList.append(rotation)
-                bulletEndPosListX.append(self.lineEnd[0])
-                bulletEndPosListY.append(self.lineEnd[1])
-
-        for x in range(len(bulletXlist)):
-            dx = (bulletEndPosListX[x] - bulletXlist[x])
-            dy = (bulletEndPosListY[x] - bulletYlist[x])
-
-            distance = math.hypot(dx, dy)
-
-            if distance != 0:
-                dx /= distance
-                dy /= distance
-
-            bulletXlist[x] += dx * bulletSpeed
-            bulletYlist[x] += dy * bulletSpeed
-    
-    def blitBullets(self):
-        index = []
-        if (len(bulletXlist) >= 1):
-            for x in range(len(bulletXlist)):
-                rotatedBullet = pygame.transform.rotate(bullet1, (-bulletRotList[x] + 90))
-
-                bulletRect.x = bulletXlist[x]
-                bulletRect.y = bulletYlist[x]
-
-                if not (screenRect.contains(bulletRect)):
-                    index.append(x)
-                
-                screen.blit(rotatedBullet,(bulletXlist[x],bulletYlist[x]))
-            
-            for index in sorted(index, reverse=True):
-                del bulletXlist[index]
-                del bulletYlist[index]
-                del bulletRotList[index]  
-                del bulletEndPosListX[index]
-                del bulletEndPosListY[index]
+                return True
 
     def returnPlayerSurface(self):
         return self.playerSurface

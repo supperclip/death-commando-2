@@ -52,7 +52,7 @@ class States(Enum):
 
 class EnemyLogic:
 
-    def __init__(self,X,Y,player,speed,tick,playerMask,enemyWindUpCooldown,enemyAttackCooldown):
+    def __init__(self,X,Y,player,speed,tick,playerMask,enemyWindUpCooldown,enemyAttackCooldown,enemyHP):
         self.state = States.Moving
         self.X = X
         self.Y = Y
@@ -69,7 +69,32 @@ class EnemyLogic:
         self.enemyWindUpCooldown = enemyWindUpCooldown
         self.enemyAttackCooldown = enemyAttackCooldown
         self.hookPointData = None
+        self.enemyHP = enemyHP
 
+    def detectPlayerHit(self,playerMask,player):
+        if self.mask.overlap(playerMask,(self.rect.x - player.centerx,self.rect.y - player.centery)):
+            print("test")
+
+    def getDistanceFromPlayer(self,player):
+        rotX = self.rect.x - player.centerx 
+        rotY = self.rect.y - player.centery
+        self.dist = math.hypot(rotX, rotY) + 0.000001
+        self.dist -= 80
+        self.dist = (self.dist / 20)
+        #print(self.dist)
+
+    def getEnemyState(self,tick):
+        if (self.dist <= 4 and not self.doingLogic):
+            self.state = States.notMoving
+            self.last_tick = tick
+        if (self.dist >= 4 and not self.doingLogic):
+            self.state = States.Moving
+
+    def getEnemyHP(self):
+        pass
+
+class Gargoyle(EnemyLogic):
+    
     def moveEnemy(self,player,speed,tick):
         coords = [self.X,self.Y]
         now = tick
@@ -106,22 +131,3 @@ class EnemyLogic:
         self.rect = enemyRect
 
         screen.blit(enemyRoated,enemyRect)
-
-    def detectPlayerHit(self,playerMask,player):
-        if self.mask.overlap(playerMask,(self.rect.x - player.centerx,self.rect.y - player.centery)):
-            print("test")
-
-    def getDistanceFromPlayer(self,player):
-        rotX = self.rect.x - player.centerx 
-        rotY = self.rect.y - player.centery
-        self.dist = math.hypot(rotX, rotY) + 0.000001
-        self.dist -= 80
-        self.dist = (self.dist / 20)
-        #print(self.dist)
-
-    def getEnemyState(self,tick):
-        if (self.dist <= 4 and not self.doingLogic):
-            self.state = States.notMoving
-            self.last_tick = tick
-        if (self.dist >= 4 and not self.doingLogic):
-            self.state = States.Moving
