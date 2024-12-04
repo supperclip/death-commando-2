@@ -94,6 +94,11 @@ class bulletLogic:
             return True
         if (self.bulletRect.y >= 700 or self.bulletRect.y <= 0):
             return True
+        
+    def CheckEnemyHit(self,enemyRect):
+        if self.bulletRect.colliderect(enemyRect):
+            return True
+        return False
     
 class gunLogic:
 

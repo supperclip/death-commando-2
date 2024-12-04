@@ -52,7 +52,7 @@ class States(Enum):
 
 class EnemyLogic:
 
-    def __init__(self,X,Y,player,speed,tick,playerMask,enemyWindUpCooldown,enemyAttackCooldown,enemyHP):
+    def __init__(self,X,Y,player,speed,tick,playerMask,enemyWindUpCooldown,enemyAttackCooldown,enemyHP,Damage,bulletMask,bulletX,bulletY):
         self.state = States.Moving
         self.X = X
         self.Y = Y
@@ -70,7 +70,14 @@ class EnemyLogic:
         self.enemyAttackCooldown = enemyAttackCooldown
         self.hookPointData = None
         self.enemyHP = enemyHP
+        self.Damage = Damage
+        self.bulletMask = bulletMask
+        self.bulletX = bulletX
+        self.bulletY = bulletY
 
+    def scaleEnemyRect(self,scaleValue):
+        self.rect = pygame.Rect.scale_by(self.rect,scaleValue)
+    
     def detectPlayerHit(self,playerMask,player):
         if self.mask.overlap(playerMask,(self.rect.x - player.centerx,self.rect.y - player.centery)):
             print("test")
@@ -90,8 +97,9 @@ class EnemyLogic:
         if (self.dist >= 4 and not self.doingLogic):
             self.state = States.Moving
 
-    def getEnemyHP(self):
-        pass
+    def getEnemyHP(self, bulletDamage,bulletRect):
+        if self.rect.colliderect(bulletRect):
+            self.enemyHP -= bulletDamage
 
 class Gargoyle(EnemyLogic):
     

@@ -74,6 +74,10 @@ bulletList = []
 
 bulletSpeed = 8
 fireRate = 6
+bulletDamage = 5
+
+bulletX = 0
+bulletY = 0
 
 currentGun = "FLEX raider MK1"
 
@@ -96,7 +100,7 @@ crosshair = pygame.transform.scale(crosshair, (35, 35))
 cursor = pygame.cursors.Cursor((17,17), crosshair)
 pygame.mouse.set_cursor(cursor)
 
-#enemy data:
+#Gargoyle data:
 state = States.Moving
 gargoyleX = random.randint(0,1000)
 gargoyleY = 0
@@ -105,7 +109,9 @@ gargoyleWindUpCooldown = 35
 gargoyleAttackCooldown = 75
 gargoyleHealth = 25
 
-enemyList = []
+gargoyleList = []
+
+gargoyleDeath = pygame.mixer.Sound("sounds/enemy3.wav")
 
 BLACK = (0,0,0)
 WHITE = (255,255,255)
@@ -214,15 +220,42 @@ while True:
 
     if (current_frame % 120 == 0):
         enemyX = random.randint(0,1000)
-        enemyList.append(Gargoyle(gargoyleX,gargoyleY,playerRect,gargoyleSpeed,current_frame,playerMask,gargoyleWindUpCooldown,gargoyleAttackCooldown,gargoyleHealth))
+        gargoyleList.append(Gargoyle(gargoyleX,gargoyleY,playerRect,gargoyleSpeed,current_frame,playerMask,gargoyleWindUpCooldown,gargoyleAttackCooldown,gargoyleHealth,bulletDamage,bulletMask,bulletX,bulletY))
 
-    if (len(enemyList) >= 1 ):
-        for x in range(len(enemyList)):
-            enemy = enemyList[x]
-            enemy.moveEnemy(playerPathFindRect,gargoyleSpeed,current_frame)
-            enemy.detectPlayerHit(playerMask,playerRect)
-            enemy.getDistanceFromPlayer(playerRect)
-            enemy.getEnemyState(current_frame)
+    deleteIndex = []
+    enemyKilledIndex = []
+
+    for x in range(len(gargoyleList)):
+        enemy = gargoyleList[x]
+        enemy.moveEnemy(playerPathFindRect, gargoyleSpeed, current_frame)
+        enemy.detectPlayerHit(playerMask, playerRect)
+        enemy.getDistanceFromPlayer(playerRect)
+        enemy.getEnemyState(current_frame)
+        enemy.scaleEnemyRect(0.5)
+
+        for y in range(len(bulletList)):
+            bullet = bulletList[y]
+
+            if bullet.CheckEnemyHit(enemy.rect):
+                deleteIndex.append(y)
+
+            bulletMask = pygame.mask.from_surface(bulletList[y].rotatedBullet)
+            bulletX = bulletList[y].bulletRect.x
+            bulletY = bulletList[y].bulletRect.y
+
+            enemy.getEnemyHP(bulletDamage,bullet.bulletRect)
+
+        #pygame.draw.rect(screen,BLACK,enemy.rect)
+
+        if enemy.enemyHP <= 0:
+            enemyKilledIndex.append(x)
+            pygame.mixer.Sound.play(gargoyleDeath)
+
+    for index in sorted(deleteIndex, reverse=True):
+        del bulletList[index]
+
+    for index in sorted(enemyKilledIndex, reverse=True):
+        del gargoyleList[index]
 
     #screen.blit(testSurface,(gunPosX,gunPosY))
     #screen.blit(rotated_player_image, playerRoatedRect.topleft)
