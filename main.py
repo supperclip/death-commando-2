@@ -10,6 +10,8 @@ from gun_class import bulletLogic
 from enemy_class import EnemyLogic
 from enemy_class import States
 from enemy_class import Gargoyle
+from enemy_class import Brute
+from gameLogic_class import gameLogic
 
 pygame.init()
 screen = pygame.display.set_mode((1000, 700))
@@ -58,7 +60,18 @@ bulletMask = pygame.mask.from_surface(bullet1)
 FLEXList = [playerFlex1,playerFlexShoot1,playerFlexShoot2,playerFlexShoot3]
 ravagerMK1List = [player_1,playerShoot1,playerShoot2,playerShoot3]
 
-playerSprites = FLEXList
+ravagerShell = pygame.image.load("x/ravagerShell.png")
+
+bullet1 = pygame.image.load("x/bullet1.png")
+
+playerSprites = ravagerMK1List
+
+#sounds
+bulletHit = pygame.mixer.Sound("sounds/bulletImpact.wav")
+bulletHit.set_volume(0.25)
+
+ravagerShot = pygame.mixer.Sound("sounds/rifleShot.wav")
+ravagerShot.set_volume(4)
 
 #player data
 Current_Direction = Directions.InValid
@@ -72,9 +85,9 @@ playerMask = pygame.mask.from_surface(player_1)
 #gun data:
 bulletList = []
 
-bulletSpeed = 8
-fireRate = 6
-bulletDamage = 5
+bulletSpeed = 7.5
+fireRate = 15
+bulletDamage = 15
 
 bulletX = 0
 bulletY = 0
@@ -91,7 +104,7 @@ gunRect = gunSurface.get_rect()
 gunRect.x = playerRect.x
 gunRect.y = playerRect.y
 
-recoil = 35
+recoil = 45
 
 lineEnd = 0
 
@@ -101,17 +114,22 @@ cursor = pygame.cursors.Cursor((17,17), crosshair)
 pygame.mouse.set_cursor(cursor)
 
 #Gargoyle data:
-state = States.Moving
 gargoyleX = random.randint(0,1000)
 gargoyleY = 0
-gargoyleSpeed = 1.1
-gargoyleWindUpCooldown = 35
-gargoyleAttackCooldown = 75
-gargoyleHealth = 25
-
+gargoyleSpeed = 1.6
+gargoyleHealth = 15
 gargoyleList = []
-
 gargoyleDeath = pygame.mixer.Sound("sounds/enemy3.wav")
+gargoyleDeath.set_volume(2.5)
+
+#brute data
+bruteX = random.randint(0,1000)
+bruteY = 0
+bruteSpeed = 1.15
+bruteHealth = 125
+bruteWindUpCooldown = 20
+bruteAttackCooldown = 60
+bruteList = []
 
 BLACK = (0,0,0)
 WHITE = (255,255,255)
@@ -120,6 +138,8 @@ bullet1 = pygame.image.load("x/bullet1.png")
 
 guns = gunLogic(M_pressed,gunRect,bulletSpeed,current_frame,fireRate,Tangle_degrees,lineEnd,Tangle_radians,TrotX,TrotY,Tdist,recoil,playerSprites)
 p = player(Current_Direction,current_frame,MoveSpeed)
+logic = gameLogic()
+
 
 def rotateAroundCircleX(rect,angle,radius):
     x = rect.x + 50 + math.cos(-angle - 0.25) * radius
@@ -207,6 +227,7 @@ while True:
         bulletObject.GetRoation()
         bulletObject.SpawnBullet()
         bulletList.append(bulletObject)
+        pygame.mixer.Sound.play(ravagerShot)
 
     # In your game loop:
     for x in range(len(bulletList)):
@@ -218,11 +239,14 @@ while True:
     for index in sorted(deleteIndex):
             del bulletList[index]
 
-    if (current_frame % 120 == 0):
-        enemyX = random.randint(0,1000)
-        gargoyleList.append(Gargoyle(gargoyleX,gargoyleY,playerRect,gargoyleSpeed,current_frame,playerMask,gargoyleWindUpCooldown,gargoyleAttackCooldown,gargoyleHealth,bulletDamage,bulletMask,bulletX,bulletY))
+    if (current_frame % 30 == 0):
+        gargoyleX = random.randint(0,1000)
+        gargoyleList.append(Gargoyle(gargoyleX,gargoyleY,playerRect,gargoyleSpeed,current_frame,playerMask,gargoyleHealth,bulletDamage,bulletMask,bulletX,bulletY))
 
-    deleteIndex = []
+    if (current_frame % 660 == 0):
+        bruteX = random.randint(0,1000)
+        bruteList.append(Brute(bruteX,bruteY,playerRect,bruteSpeed,current_frame,playerMask,bruteHealth,bulletDamage,bulletMask,bulletX,bulletY,bruteWindUpCooldown,bruteAttackCooldown))
+
     enemyKilledIndex = []
 
     for x in range(len(gargoyleList)):
@@ -233,29 +257,29 @@ while True:
         enemy.getEnemyState(current_frame)
         enemy.scaleEnemyRect(0.5)
 
-        for y in range(len(bulletList)):
-            bullet = bulletList[y]
-
-            if bullet.CheckEnemyHit(enemy.rect):
-                deleteIndex.append(y)
-
-            bulletMask = pygame.mask.from_surface(bulletList[y].rotatedBullet)
-            bulletX = bulletList[y].bulletRect.x
-            bulletY = bulletList[y].bulletRect.y
-
-            enemy.getEnemyHP(bulletDamage,bullet.bulletRect)
-
-        #pygame.draw.rect(screen,BLACK,enemy.rect)
-
-        if enemy.enemyHP <= 0:
-            enemyKilledIndex.append(x)
-            pygame.mixer.Sound.play(gargoyleDeath)
-
-    for index in sorted(deleteIndex, reverse=True):
-        del bulletList[index]
+        killedIndex = logic.killEnemy(bulletList,enemy,bulletDamage,gargoyleDeath,x)
+        enemyKilledIndex.extend(killedIndex)
+        logic.enemyBulletCollision(bulletList,bulletHit,enemy)
 
     for index in sorted(enemyKilledIndex, reverse=True):
         del gargoyleList[index]
+
+    bruteKilledIndex = []
+
+    for x in range(len(bruteList)):
+        brute = bruteList[x]
+        brute.chargeAttack(playerPathFindRect, gargoyleSpeed, current_frame)
+        brute.detectPlayerHit(playerMask, playerRect)
+        brute.getDistanceFromPlayer(playerRect)
+        brute.scaleEnemyRect(0.5)
+        brute.getEnemyState(current_frame)
+
+        killedIndex = logic.killEnemy(bulletList,brute,bulletDamage,gargoyleDeath,x)
+        bruteKilledIndex.extend(killedIndex)
+        logic.enemyBulletCollision(bulletList,bulletHit,brute)
+
+    for index in sorted(bruteKilledIndex, reverse=True):
+        del bruteList[index]
 
     #screen.blit(testSurface,(gunPosX,gunPosY))
     #screen.blit(rotated_player_image, playerRoatedRect.topleft)

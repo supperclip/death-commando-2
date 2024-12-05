@@ -7,6 +7,7 @@ import random
 pygame.init()
 
 bullet1 = pygame.image.load("x/bullet1.png")
+bullet1 = pygame.transform.rotate(bullet1,0)
 bulletRect = bullet1.get_rect()
 
 rifleShot = pygame.mixer.Sound("sounds/rifleShot.wav")
@@ -81,7 +82,7 @@ class bulletLogic:
         self.dx *= self.bulletSpeed
         self.dy *= self.bulletSpeed
 
-        self.rotatedBullet = pygame.transform.rotate(bullet1, (self.rotation - 270))  # Apply the rotation
+        self.rotatedBullet = pygame.transform.rotate(bullet1, (-self.rotation - 90))  # Apply the rotation
 
     def MoveBullet(self):
         self.bulletRect.x += self.dx

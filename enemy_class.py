@@ -18,6 +18,16 @@ enemy_2 = pygame.transform.scale(enemy_2, (60, 60))
 
 enemyAnimationList = [enemy_1, enemy_2]
 
+brute1 = pygame.image.load("x/brute_1.png").convert_alpha()
+brute1 = pygame.transform.rotate(brute1, 90)
+brute1 = pygame.transform.scale(brute1, (100, 100))
+
+brute2 = pygame.image.load("x/brute_2.png").convert_alpha()
+brute2 = pygame.transform.rotate(brute2, 90)
+brute2 = pygame.transform.scale(brute2, (100, 100))
+
+bruteAnimationList = [brute1, brute2]
+
 def Animation(current_frame,maxFrames,inputFrame,time):
     frame = inputFrame
     if (current_frame % time == 0):
@@ -52,7 +62,7 @@ class States(Enum):
 
 class EnemyLogic:
 
-    def __init__(self,X,Y,player,speed,tick,playerMask,enemyWindUpCooldown,enemyAttackCooldown,enemyHP,Damage,bulletMask,bulletX,bulletY):
+    def __init__(self,X,Y,player,speed,tick,playerMask,enemyHP,Damage,bulletMask,bulletX,bulletY):
         self.state = States.Moving
         self.X = X
         self.Y = Y
@@ -66,8 +76,6 @@ class EnemyLogic:
         self.dist = 0
         self.doingLogic = False
         self.last_tick = tick
-        self.enemyWindUpCooldown = enemyWindUpCooldown
-        self.enemyAttackCooldown = enemyAttackCooldown
         self.hookPointData = None
         self.enemyHP = enemyHP
         self.Damage = Damage
@@ -97,7 +105,7 @@ class EnemyLogic:
         if (self.dist >= 4 and not self.doingLogic):
             self.state = States.Moving
 
-    def getEnemyHP(self, bulletDamage,bulletRect):
+    def getEnemyHP(self,bulletDamage,bulletRect):
         if self.rect.colliderect(bulletRect):
             self.enemyHP -= bulletDamage
 
@@ -114,12 +122,62 @@ class Gargoyle(EnemyLogic):
             self.Y = MoveEnemyY(enemyRotData[0], enemyRotData[1],self.Y, speed)
 
         if (self.state == States.notMoving):
+            pass
+
+        enemyRoated = pygame.transform.rotate(enemySurface, -enemyRotData[2])
+        enemyRect = enemyRoated.get_rect(center=(self.X,self.Y))
+        self.mask = pygame.mask.from_surface(enemyRoated)
+        self.rect = enemyRect
+
+        screen.blit(enemyRoated,enemyRect)
+
+    def getEnemyState(self,tick):
+        if (self.dist >= 4 and not self.doingLogic):
+            self.state = States.Moving
+
+class Brute(EnemyLogic):
+
+    def __init__(self,X,Y,player,speed,tick,playerMask,enemyHP,Damage,bulletMask,bulletX,bulletY,WindUpCooldown,AttackCooldown):
+        self.state = States.Moving
+        self.X = X
+        self.Y = Y
+        self.player = player
+        self.speed = speed
+        self.animationFrame = 0
+        self.tick = tick
+        self.playerMask = playerMask
+        self.mask = 0
+        self.rect = 0
+        self.dist = 0
+        self.doingLogic = False
+        self.last_tick = tick
+        self.WindUpCooldown = WindUpCooldown
+        self.AttackCooldown = AttackCooldown
+        self.hookPointData = None
+        self.enemyHP = enemyHP
+        self.Damage = Damage
+        self.bulletMask = bulletMask
+        self.bulletX = bulletX
+        self.bulletY = bulletY
+        self.AnimationList = bruteAnimationList
+
+    def chargeAttack(self,player,speed,tick):
+        coords = [self.X,self.Y]
+        now = tick
+        self.animationFrame = Animation(tick,1,self.animationFrame,25)
+        enemySurface = bruteAnimationList[self.animationFrame]
+        enemyRotData = GetRotationAngle(player,coords)
+        if (self.state == States.Moving):
+            self.X = MoveEnemyX(enemyRotData[0], enemyRotData[1],self.X, speed)
+            self.Y = MoveEnemyY(enemyRotData[0], enemyRotData[1],self.Y, speed)
+
+        if (self.state == States.notMoving):
             self.doingLogic = True
             speed = speed * 1.75
             self.X = MoveEnemyX(enemyRotData[0], enemyRotData[1],self.X, -speed)
             self.Y = MoveEnemyY(enemyRotData[0], enemyRotData[1],self.Y, -speed)
 
-            if (now - self.last_tick) >= self.enemyWindUpCooldown:
+            if (now - self.last_tick) >= self.WindUpCooldown:
                 self.last_tick = now
                 self.state = States.Attacking
                 self.hookPointData = GetRotationAngle(player,coords)
@@ -129,7 +187,7 @@ class Gargoyle(EnemyLogic):
             self.X = MoveEnemyX(self.hookPointData[0], self.hookPointData[1],self.X, speed)
             self.Y = MoveEnemyY(self.hookPointData[0], self.hookPointData[1],self.Y, speed)
 
-            if (now - self.last_tick) >= self.enemyAttackCooldown:
+            if (now - self.last_tick) >= self.AttackCooldown:
                 self.last_tick = now
                 self.doingLogic = False
 
@@ -139,3 +197,10 @@ class Gargoyle(EnemyLogic):
         self.rect = enemyRect
 
         screen.blit(enemyRoated,enemyRect)
+
+    def getEnemyState(self,tick):
+        if (self.dist <= 8.5 and not self.doingLogic):
+            self.state = States.notMoving
+            self.last_tick = tick
+        if (self.dist >= 8.5 and not self.doingLogic):
+            self.state = States.Moving
