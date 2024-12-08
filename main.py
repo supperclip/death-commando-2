@@ -5,12 +5,16 @@ import random
 import math
 from player_class import player
 from player_class import Directions
+
 from gun_class import gunLogic
 from gun_class import bulletLogic
+
 from enemy_class import EnemyLogic
 from enemy_class import States
 from enemy_class import Gargoyle
 from enemy_class import Brute
+from enemy_class import Rager
+
 from gameLogic_class import gameLogic
 
 pygame.init()
@@ -116,7 +120,7 @@ pygame.mouse.set_cursor(cursor)
 #Gargoyle data:
 gargoyleX = random.randint(0,1000)
 gargoyleY = 0
-gargoyleSpeed = 1.6
+gargoyleSpeed = 1.8
 gargoyleHealth = 15
 gargoyleList = []
 gargoyleDeath = pygame.mixer.Sound("sounds/enemy3.wav")
@@ -125,11 +129,18 @@ gargoyleDeath.set_volume(2.5)
 #brute data
 bruteX = random.randint(0,1000)
 bruteY = 0
-bruteSpeed = 1.15
-bruteHealth = 125
-bruteWindUpCooldown = 20
-bruteAttackCooldown = 60
+bruteSpeed = 1
+bruteHealth = 200
+bruteWindUpCooldown = 40
+bruteAttackCooldown = 90
 bruteList = []
+
+#rager data
+ragerX = random.randint(0,1000)
+ragerY = 0 
+ragerSpeed = 4
+ragerHealth = 5
+ragerList = []
 
 BLACK = (0,0,0)
 WHITE = (255,255,255)
@@ -247,6 +258,11 @@ while True:
         bruteX = random.randint(0,1000)
         bruteList.append(Brute(bruteX,bruteY,playerRect,bruteSpeed,current_frame,playerMask,bruteHealth,bulletDamage,bulletMask,bulletX,bulletY,bruteWindUpCooldown,bruteAttackCooldown))
 
+    if (current_frame % 250 == 0):
+        for x in range(2):
+            ragerX = random.randint(0,1000)
+            ragerList.append(Rager(ragerX,ragerY,playerRect,ragerSpeed,current_frame,playerMask,ragerHealth,bulletDamage,bulletMask,bulletX,bulletY))
+
     enemyKilledIndex = []
 
     for x in range(len(gargoyleList)):
@@ -268,7 +284,7 @@ while True:
 
     for x in range(len(bruteList)):
         brute = bruteList[x]
-        brute.chargeAttack(playerPathFindRect, gargoyleSpeed, current_frame)
+        brute.chargeAttack(playerPathFindRect, bruteSpeed, current_frame)
         brute.detectPlayerHit(playerMask, playerRect)
         brute.getDistanceFromPlayer(playerRect)
         brute.scaleEnemyRect(0.5)
@@ -280,6 +296,23 @@ while True:
 
     for index in sorted(bruteKilledIndex, reverse=True):
         del bruteList[index]
+
+    ragerKilledIndex = []
+
+    for x in range(len(ragerList)):
+        rager = ragerList[x]
+        rager.moveEnemy(playerPathFindRect, ragerSpeed, current_frame)
+        rager.detectPlayerHit(playerMask, playerRect)
+        rager.getDistanceFromPlayer(playerRect)
+        rager.getEnemyState(current_frame)
+        rager.scaleEnemyRect(0.5)
+
+        killedIndex = logic.killEnemy(bulletList,rager,bulletDamage,gargoyleDeath,x)
+        ragerKilledIndex.extend(killedIndex)
+        logic.enemyBulletCollision(bulletList,bulletHit,rager)
+
+    for index in sorted(ragerKilledIndex, reverse=True):
+        del ragerList[index]
 
     #screen.blit(testSurface,(gunPosX,gunPosY))
     #screen.blit(rotated_player_image, playerRoatedRect.topleft)

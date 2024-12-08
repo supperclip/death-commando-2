@@ -28,6 +28,16 @@ brute2 = pygame.transform.scale(brute2, (100, 100))
 
 bruteAnimationList = [brute1, brute2]
 
+rager1 = pygame.image.load("x/rager_1.png").convert_alpha()
+rager1 = pygame.transform.rotate(rager1, 90)
+rager1 = pygame.transform.scale(rager1, (60, 60))
+
+rager2 = pygame.image.load("x/rager_2.png").convert_alpha()
+rager2 = pygame.transform.rotate(rager2, 90)
+rager2 = pygame.transform.scale(rager2, (60, 60))
+
+ragerAnimationList = [rager1,rager2]
+
 def Animation(current_frame,maxFrames,inputFrame,time):
     frame = inputFrame
     if (current_frame % time == 0):
@@ -164,8 +174,6 @@ class Brute(EnemyLogic):
     def chargeAttack(self,player,speed,tick):
         coords = [self.X,self.Y]
         now = tick
-        self.animationFrame = Animation(tick,1,self.animationFrame,25)
-        enemySurface = bruteAnimationList[self.animationFrame]
         enemyRotData = GetRotationAngle(player,coords)
         if (self.state == States.Moving):
             self.X = MoveEnemyX(enemyRotData[0], enemyRotData[1],self.X, speed)
@@ -191,6 +199,8 @@ class Brute(EnemyLogic):
                 self.last_tick = now
                 self.doingLogic = False
 
+        self.animationFrame = Animation(tick,1,self.animationFrame,12)
+        enemySurface = bruteAnimationList[self.animationFrame]
         enemyRoated = pygame.transform.rotate(enemySurface, -enemyRotData[2])
         enemyRect = enemyRoated.get_rect(center=(self.X,self.Y))
         self.mask = pygame.mask.from_surface(enemyRoated)
@@ -203,4 +213,32 @@ class Brute(EnemyLogic):
             self.state = States.notMoving
             self.last_tick = tick
         if (self.dist >= 8.5 and not self.doingLogic):
+            self.state = States.Moving
+
+
+class Rager(EnemyLogic):
+
+    def moveEnemy(self,player,speed,tick):
+        coords = [self.X,self.Y]
+        now = tick
+        enemyRotData = GetRotationAngle(player,coords)
+        if (self.state == States.Moving):
+            self.X = MoveEnemyX(enemyRotData[0], enemyRotData[1],self.X, speed)
+            self.Y = MoveEnemyY(enemyRotData[0], enemyRotData[1],self.Y, speed)
+
+        if (self.state == States.notMoving):
+            pass
+        
+        self.animationFrame = Animation(tick,1,self.animationFrame,25)
+        enemySurface = ragerAnimationList[self.animationFrame]
+        
+        enemyRoated = pygame.transform.rotate(enemySurface, -enemyRotData[2])
+        enemyRect = enemyRoated.get_rect(center=(self.X,self.Y))
+        self.mask = pygame.mask.from_surface(enemyRoated)
+        self.rect = enemyRect
+
+        screen.blit(enemyRoated,enemyRect)
+
+    def getEnemyState(self,tick):
+        if (self.dist >= 4 and not self.doingLogic):
             self.state = States.Moving
