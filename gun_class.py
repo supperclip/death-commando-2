@@ -137,10 +137,10 @@ class gunLogic:
         self.playerSurface = rotated_player_image
         self.newPlayerRect = playerRoatedRect
 
-    def canShoot(self,Tick,fireRate,M1Pressed):
+    def canShoot(self,Tick,fireRate,M1Pressed,reloading):
         now = Tick
         if (M1Pressed):
-            if (now - self.last_tick) >= fireRate:
+            if (now - self.last_tick) >= fireRate and not reloading:
                 self.last_tick = now
                 return True
 

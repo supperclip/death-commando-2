@@ -22,6 +22,13 @@ screen = pygame.display.set_mode((1000, 700))
 pygame.display.set_caption("death commando: pest control II")
 clock = pygame.time.Clock()
 
+basicFont = pygame.font.Font("fonts/Swiss 721 Extended Bold.otf", 50)
+pixelFont = pygame.font.Font("fonts/dogicapixel.ttf", 40)
+pixelFontBold = pygame.font.Font("fonts/dogicapixelbold.ttf", 50)
+
+BLACK = (0,0,0)
+WHITE = (255,255,255)
+
 background = pygame.image.load("x/background.png")
 
 current_frame = 0
@@ -30,8 +37,18 @@ Tangle_degrees = 0
 testSurface = pygame.Surface((20,20))
 testSurface.fill("black")
 
+magSizeUI = pygame.Surface((48,82))
+magSizeUI.fill("white")
+
 playerPathFindRect = pygame.surface.Surface((45,45))
 playerPathFindRect = playerPathFindRect.get_rect()
+
+UITest = pygame.Surface((210,100))
+UITest.fill("black")
+
+UI1 = pygame.image.load("x/UI1.png")
+UI1 = pygame.transform.scale(UI1 ,(500,225.5))
+UI1 = pygame.transform.rotate(UI1 ,180)
 
 player_1 = pygame.image.load("x/player_1.png")
 player_1 = pygame.transform.rotate(player_1, 90)
@@ -92,6 +109,23 @@ bulletList = []
 bulletSpeed = 7.5
 fireRate = 15
 bulletDamage = 15
+recoil = 45
+lineEnd = 0
+
+magSizeUIHeight = 82
+
+mags = 5
+maxMags = 7
+magText = pixelFont.render(str(mags) + "/" + str(maxMags),True,BLACK)
+
+magUI = pygame.image.load("x/magUI.png") #24 * 42
+magUI = pygame.transform.scale(magUI,((24 * 2),(42 * 2)))
+
+magSize = 35
+magSizeText = pixelFont.render(str(magSize),True,BLACK)
+maxMagSize = 35
+
+isReloading = False
 
 bulletX = 0
 bulletY = 0
@@ -108,10 +142,7 @@ gunRect = gunSurface.get_rect()
 gunRect.x = playerRect.x
 gunRect.y = playerRect.y
 
-recoil = 45
-
-lineEnd = 0
-
+#corsshair
 crosshair = pygame.image.load("x/crosshair.png")
 crosshair = pygame.transform.scale(crosshair, (35, 35))
 cursor = pygame.cursors.Cursor((17,17), crosshair)
@@ -141,9 +172,6 @@ ragerY = 0
 ragerSpeed = 4
 ragerHealth = 5
 ragerList = []
-
-BLACK = (0,0,0)
-WHITE = (255,255,255)
 
 bullet1 = pygame.image.load("x/bullet1.png")
 
@@ -176,7 +204,13 @@ while True:
     
     current_frame += 1
     
-    screen.blit(background, (0, 0))  
+    screen.blit(background, (0, 0))
+
+    screen.blit(UI1,(560,510))
+    screen.blit(magUI,(925,585))
+    screen.blit(magText,(810,610))
+    screen.blit(magSizeText,(925,585))
+    #screen.blit(magSizeUI,(925,(585 - magSizeUIHeight) + 82))
     
     for event in pygame.event.get():
             if event.type == QUIT:
@@ -231,24 +265,24 @@ while True:
     guns.blitPlayer(playerSprites,M_pressed,Tangle_degrees,playerRect,current_frame)
     playerMask = pygame.mask.from_surface(guns.returnPlayerSurface())
 
-    deleteIndex = []
+    if (magSize <= 0):
+        isReloading = True
 
-    if guns.canShoot(current_frame, fireRate, M_pressed):
+    if guns.canShoot(current_frame, fireRate, M_pressed,isReloading):
         bulletObject = bulletLogic(gunPosX, gunPosY, TrotX, TrotY, recoil, Tdist, Tangle_degrees, bulletSpeed)
         bulletObject.GetRoation()
         bulletObject.SpawnBullet()
         bulletList.append(bulletObject)
         pygame.mixer.Sound.play(ravagerShot)
+        magSize -= 1
+        magSizeUIHeight = (82 * (magSize / maxMagSize))
+        magSizeUI = pygame.transform.scale(magSizeUI,(48,magSizeUIHeight))
+    
+    magSizeText = pixelFont.render(str(magSize),True,BLACK)
 
-    # In your game loop:
     for x in range(len(bulletList)):
         bullet = bulletList[x]
         bullet.MoveBullet()
-        if (bullet.DeleteBullet()):
-            deleteIndex.append(x)
-
-    for index in sorted(deleteIndex):
-            del bulletList[index]
 
     if (current_frame % 30 == 0):
         gargoyleX = random.randint(0,1000)
