@@ -41,6 +41,7 @@ def Animation(current_frame,maxFrames,inputFrame,time):
 
 
 class bulletLogic:
+    
     def __init__(self, gunPosX, gunPosY, rotX, rotY, recoil, dist, rotation, bulletSpeed):
         self.gunPosX = gunPosX
         self.gunPosY = gunPosY
@@ -62,6 +63,29 @@ class bulletLogic:
         self.bulletRect.y = self.gunPosY
 
     def GetRoation(self):
+        recoilX = random.randint(-self.recoil, self.recoil)
+        recoilY = random.randint(-self.recoil, self.recoil)
+
+        rotY = self.rotY + recoilY
+        rotX = self.rotX + recoilX
+
+        endX = self.bulletRect.x + rotX * self.dist
+        endY = self.bulletRect.y + rotY * self.dist
+
+        self.dx = endX - self.bulletRect.x
+        self.dy = endY - self.bulletRect.y
+
+        distance = math.hypot(self.dx, self.dy)
+        if distance != 0:
+            self.dx /= distance
+            self.dy /= distance
+
+        self.dx *= self.bulletSpeed
+        self.dy *= self.bulletSpeed
+
+        self.rotatedBullet = pygame.transform.rotate(bullet1, (-self.rotation - 90))  # Apply the rotation
+
+    def SmartBullet(self):
         recoilX = random.randint(-self.recoil, self.recoil)
         recoilY = random.randint(-self.recoil, self.recoil)
 
@@ -122,14 +146,14 @@ class gunLogic:
         self.newPlayerRect = 0
         self.rotatedBullet = 0
     
-    def blitPlayer(self,playerSprites,M1Pressed,rads,playerRect,Tick):
-        if (M1Pressed):
+    def blitPlayer(self,playerSprites,M1Pressed,rads,playerRect,Tick,gunState):
+        if (gunState == gunState.Firing):
             self.gunAnimationFrame = 0 + Animation(Tick,2,self.gunAnimationFrame,10)
             playerSprite = playerSprites[self.gunAnimationFrame + 1]
             rotated_player_image = pygame.transform.rotate(playerSprite,-rads)
             playerRoatedRect = rotated_player_image.get_rect(center=playerRect.center)
             screen.blit(rotated_player_image,playerRoatedRect)
-        if not (M1Pressed):
+        else:
             playerSprite = playerSprites[0]
             rotated_player_image = pygame.transform.rotate(playerSprite,-rads)
             playerRoatedRect = rotated_player_image.get_rect(center=playerRect.center)
@@ -137,11 +161,22 @@ class gunLogic:
         self.playerSurface = rotated_player_image
         self.newPlayerRect = playerRoatedRect
 
-    def canShoot(self,Tick,fireRate,M1Pressed,reloading):
+    def canShoot(self,Tick,fireRate,gunState):
         now = Tick
-        if (M1Pressed):
-            if (now - self.last_tick) >= fireRate and not reloading:
+        if (gunState == gunState.Firing):
+            if (now - self.last_tick) >= fireRate:
                 self.last_tick = now
+                return True
+            
+    def reloadGun(self,Tick,gunState,sound1,sound2,sound3):
+        now = Tick
+        if (gunState == gunState.Reloading):
+            if (now - self.last_tick) == 35:
+                pygame.mixer.Sound.play(sound1)
+            if (now - self.last_tick) == 60:
+                pygame.mixer.Sound.play(sound2)
+            if (now - self.last_tick) == 120:
+                pygame.mixer.Sound.play(sound3)
                 return True
 
     def returnPlayerSurface(self):
@@ -149,3 +184,5 @@ class gunLogic:
     
     def returnPlayerRect(self):
         return self.newPlayerRect
+    
+from main import gunState

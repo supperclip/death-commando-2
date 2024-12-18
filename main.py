@@ -3,11 +3,13 @@ import sys
 from pygame.locals import QUIT
 import random
 import math
-from player_class import player
-from player_class import Directions
+from enum import Enum
 
 from gun_class import gunLogic
 from gun_class import bulletLogic
+
+from player_class import player
+from player_class import Directions
 
 from enemy_class import EnemyLogic
 from enemy_class import States
@@ -16,6 +18,11 @@ from enemy_class import Brute
 from enemy_class import Rager
 
 from gameLogic_class import gameLogic
+
+class gunState(Enum):
+    notFiring = 0
+    Firing = 1
+    Reloading = 2
 
 pygame.init()
 screen = pygame.display.set_mode((1000, 700))
@@ -37,7 +44,7 @@ Tangle_degrees = 0
 testSurface = pygame.Surface((20,20))
 testSurface.fill("black")
 
-magSizeUI = pygame.Surface((48,82))
+magSizeUI = pygame.Surface((70,92))
 magSizeUI.fill("white")
 
 playerPathFindRect = pygame.surface.Surface((45,45))
@@ -46,21 +53,20 @@ playerPathFindRect = playerPathFindRect.get_rect()
 UITest = pygame.Surface((210,100))
 UITest.fill("black")
 
-UI1 = pygame.image.load("x/UI1.png")
-UI1 = pygame.transform.scale(UI1 ,(500,225.5))
-UI1 = pygame.transform.rotate(UI1 ,180)
+UI1 = pygame.image.load("x/ammoUI.png")
+UI1 = pygame.transform.scale_by(UI1 ,(2.7,2.2))
 
 player_1 = pygame.image.load("x/player_1.png")
 player_1 = pygame.transform.rotate(player_1, 90)
 playerRect = player_1.get_rect()
 
-playerShoot1 = pygame.image.load("x/player_shoot_1.png").convert_alpha()
+playerShoot1 = pygame.image.load("x/player_shoot_1.png")
 playerShoot1 = pygame.transform.rotate(playerShoot1, 90)
 
-playerShoot2 = pygame.image.load("x/player_shoot_2.png").convert_alpha()
+playerShoot2 = pygame.image.load("x/player_shoot_2.png")
 playerShoot2 = pygame.transform.rotate(playerShoot2, 90)
 
-playerShoot3 = pygame.image.load("x/player_shoot_3.png").convert_alpha()
+playerShoot3 = pygame.image.load("x/player_shoot_3.png")
 playerShoot3 = pygame.transform.rotate(playerShoot3, 90)
 
 playerFlex1 = pygame.image.load("x/player_FLEX_1.png")
@@ -75,11 +81,24 @@ playerFlexShoot2 = pygame.transform.rotate(playerFlexShoot2, 90)
 playerFlexShoot3 = pygame.image.load("x/player_FLEX_shoot3.png")
 playerFlexShoot3 = pygame.transform.rotate(playerFlexShoot3, 90)
 
+playerSmartRifle = pygame.image.load("x/player_SmartRifle.png")
+playerSmartRifle = pygame.transform.rotate(playerSmartRifle, 90)
+
+playerSmartRifleShoot1 = pygame.image.load("x/player_SmartRifle_shoot_1.png")
+playerSmartRifleShoot1 = pygame.transform.rotate(playerSmartRifle, 90)
+
+playerSmartRifleShoot2 = pygame.image.load("x/player_SmartRifle_shoot_2.png")
+playerSmartRifleShoot2 = pygame.transform.rotate(playerSmartRifleShoot2, 90)
+
+playerSmartRifleShoot3 = pygame.image.load("x/player_SmartRifle_shoot_3.png")
+playerSmartRifleShoot3 = pygame.transform.rotate(playerSmartRifleShoot3, 90)
+
 bullet1 = pygame.image.load("x/bullet1.png")
 bulletMask = pygame.mask.from_surface(bullet1)
 
 FLEXList = [playerFlex1,playerFlexShoot1,playerFlexShoot2,playerFlexShoot3]
 ravagerMK1List = [player_1,playerShoot1,playerShoot2,playerShoot3]
+SmartRifleList = [playerSmartRifle,playerSmartRifleShoot1,playerSmartRifleShoot2,playerSmartRifleShoot3]
 
 ravagerShell = pygame.image.load("x/ravagerShell.png")
 
@@ -89,10 +108,17 @@ playerSprites = ravagerMK1List
 
 #sounds
 bulletHit = pygame.mixer.Sound("sounds/bulletImpact.wav")
-bulletHit.set_volume(0.25)
+bulletHit.set_volume(0.1)
 
-ravagerShot = pygame.mixer.Sound("sounds/rifleShot.wav")
-ravagerShot.set_volume(4)
+ravagerShoot = pygame.mixer.Sound("sounds/rifleShot.wav")
+ravagerShoot.set_volume(4)
+
+flexShoot = pygame.mixer.Sound("sounds/flexShoot.wav")
+flexShoot.set_volume(0.7)
+
+reload1 = pygame.mixer.Sound("sounds/metalReload1.wav")
+reload2 = pygame.mixer.Sound("sounds/metalReload2.wav")
+reload3 = pygame.mixer.Sound("sounds/metalReload3.wav")
 
 #player data
 Current_Direction = Directions.InValid
@@ -100,11 +126,15 @@ MoveSpeed = 1.2
 Tangle_radians = 0
 
 M_pressed = False
+R_pressed = False
+
+animationList = ravagerMK1List
 
 playerMask = pygame.mask.from_surface(player_1)
 
 #gun data:
 bulletList = []
+weaponShoot = ravagerShoot
 
 bulletSpeed = 7.5
 fireRate = 15
@@ -112,20 +142,21 @@ bulletDamage = 15
 recoil = 45
 lineEnd = 0
 
-magSizeUIHeight = 82
+magSizeUIHeight = 92
 
 mags = 5
-maxMags = 7
-magText = pixelFont.render(str(mags) + "/" + str(maxMags),True,BLACK)
+maxMags = 5
+magText = pixelFont.render(str(mags) + "/" + str(maxMags),True,WHITE)
 
 magUI = pygame.image.load("x/magUI.png") #24 * 42
 magUI = pygame.transform.scale(magUI,((24 * 2),(42 * 2)))
 
-magSize = 35
-magSizeText = pixelFont.render(str(magSize),True,BLACK)
-maxMagSize = 35
+maxMagSize = 20
+magSize = maxMagSize
 
-isReloading = False
+autoOfAmmo = False
+
+currentGunState = gunState.notFiring
 
 bulletX = 0
 bulletY = 0
@@ -175,7 +206,8 @@ ragerList = []
 
 bullet1 = pygame.image.load("x/bullet1.png")
 
-guns = gunLogic(M_pressed,gunRect,bulletSpeed,current_frame,fireRate,Tangle_degrees,lineEnd,Tangle_radians,TrotX,TrotY,Tdist,recoil,playerSprites)
+guns = gunLogic(M_pressed,gunRect,bulletSpeed,current_frame,fireRate,Tangle_degrees,lineEnd,Tangle_radians,TrotX,TrotY,Tdist,recoil,animationList)
+
 p = player(Current_Direction,current_frame,MoveSpeed)
 logic = gameLogic()
 
@@ -188,17 +220,22 @@ def rotateAroundCircleY(rect,angle,radius):
     y = rect.y + 50 - math.sin(-angle - 0.25) * radius
     return y
 
+WeaponSwap = False
 def GunFunction(gun):
     if (gun == "FLEX raider MK1"):
-        bulletSpeed = 17
-        fireRate = 6
-        animationList = FLEXList
+        return [1,6,5,1,FLEXList,45,7,flexShoot] #bulletSpeed,fireRate,bulletDamage,recoil,animations,mags
+    if (gun == "ravagerMK1"):
+        return [7.5,15,20,45,ravagerMK1List,20,5,ravagerShoot] #bulletSpeed,fireRate,bulletDamage,recoil,animations,mags
+    if (gun == "MK1SmartRifle"):
+        return [5,10,15,0,SmartRifleList,15,5,ravagerShoot] #bulletSpeed,fireRate,bulletDamage,recoil,animations,magSize,mags
     
 def Delay(inputFrame,frame,delay):
     if (inputFrame == (frame + delay)):
         return True
     else:
         return False
+    
+enemyTypes = 3
 
 while True:
     
@@ -206,11 +243,26 @@ while True:
     
     screen.blit(background, (0, 0))
 
-    screen.blit(UI1,(560,510))
-    screen.blit(magUI,(925,585))
-    screen.blit(magText,(810,610))
-    screen.blit(magSizeText,(925,585))
-    #screen.blit(magSizeUI,(925,(585 - magSizeUIHeight) + 82))
+    magSizeUI.fill("white")
+    screen.blit(magSizeUI,(925,(590 - magSizeUIHeight) + 75))
+    screen.blit(UI1,(774,566))
+    screen.blit(magText,(810,605))
+
+    magText = pixelFont.render(str(mags) + "/" + str(maxMags),True,WHITE)
+
+    if (WeaponSwap):
+        weaponData = GunFunction(currentGun)
+        bulletSpeed = weaponData[0]
+        fireRate = weaponData[1]
+        bulletDamage = weaponData[2]
+        recoil = weaponData[3]
+        animationList = weaponData[4]
+        maxMagSize = weaponData[5]
+        magSize = weaponData[5]
+        mags = weaponData[6]
+        maxMags = weaponData[6]
+        weaponShoot = weaponData[7]
+        WeaponSwap = False
     
     for event in pygame.event.get():
             if event.type == QUIT:
@@ -240,6 +292,23 @@ while True:
     else:
         Current_Direction = Directions.InValid
 
+    if keys[pygame.K_r]:
+        R_pressed = True
+
+    if keys[pygame.K_1]:
+        currentGun = "FLEX raider MK1"
+        WeaponSwap = True
+    if keys[pygame.K_2]:
+        currentGun = "MK1SmartRifle"
+        WeaponSwap = True
+
+    if not(autoOfAmmo) and (M_pressed):
+        currentGunState = gunState.Firing
+    if not (M_pressed):
+        currentGunState = gunState.notFiring
+    if (autoOfAmmo) or (R_pressed):
+        currentGunState = gunState.Reloading
+
     mouse_x, mouse_y = pygame.mouse.get_pos()
     playerList = p.MovePlayer(Current_Direction,MoveSpeed)
     playerMoveX = (playerList[0] * MoveSpeed)
@@ -262,23 +331,47 @@ while True:
     gunRect.x = gunPosX
     gunRect.y = gunPosY
 
-    guns.blitPlayer(playerSprites,M_pressed,Tangle_degrees,playerRect,current_frame)
+    guns.blitPlayer(animationList,M_pressed,Tangle_degrees,playerRect,current_frame,currentGunState)
+    
+    if(guns.reloadGun(current_frame,currentGunState,reload1,reload2,reload3)):
+        magSize = maxMagSize
+        R_pressed = False
+        magSizeUIHeight = (92 * (magSize / maxMagSize))
+        magSizeUI = pygame.transform.scale(magSizeUI,(70,magSizeUIHeight))
+
     playerMask = pygame.mask.from_surface(guns.returnPlayerSurface())
 
     if (magSize <= 0):
-        isReloading = True
+        autoOfAmmo = True
+    else:
+        autoOfAmmo = False
 
-    if guns.canShoot(current_frame, fireRate, M_pressed,isReloading):
-        bulletObject = bulletLogic(gunPosX, gunPosY, TrotX, TrotY, recoil, Tdist, Tangle_degrees, bulletSpeed)
-        bulletObject.GetRoation()
-        bulletObject.SpawnBullet()
-        bulletList.append(bulletObject)
-        pygame.mixer.Sound.play(ravagerShot)
-        magSize -= 1
-        magSizeUIHeight = (82 * (magSize / maxMagSize))
-        magSizeUI = pygame.transform.scale(magSizeUI,(48,magSizeUIHeight))
-    
-    magSizeText = pixelFont.render(str(magSize),True,BLACK)
+    if guns.canShoot(current_frame, fireRate,currentGunState):
+        if (currentGun == "MK1SmartRifle"):
+            if (len(gargoyleList) > 0):
+                gargoyle = gargoyleList[random.randint(0,(len(gargoyleList) - 1))]
+                enemyTarget = [gargoyle.X,gargoyle.Y]
+                enemyTargetX = mouse_x - enemyTarget[0]
+                enemyTargetY = mouse_y - enemyTarget[1]
+                bulletObject = bulletLogic(gunPosX, gunPosY, enemyTargetX, enemyTargetY, recoil, Tdist, Tangle_degrees, bulletSpeed)
+                bulletObject.GetRoation()
+                bulletObject.SpawnBullet()
+                bulletList.append(bulletObject)
+                pygame.mixer.Sound.play(weaponShoot)
+                magSize -= 1
+                magSizeUIHeight = (92 * (magSize / maxMagSize))
+                magSizeUI = pygame.transform.scale(magSizeUI,(70,magSizeUIHeight))
+        else:
+            bulletObject = bulletLogic(gunPosX, gunPosY, TrotX, TrotY, recoil, Tdist, Tangle_degrees, bulletSpeed)
+            bulletObject.GetRoation()
+            bulletObject.SpawnBullet()
+            bulletList.append(bulletObject)
+            pygame.mixer.Sound.play(weaponShoot)
+            magSize -= 1
+            magSizeUIHeight = (92 * (magSize / maxMagSize))
+            magSizeUI = pygame.transform.scale(magSizeUI,(70,magSizeUIHeight))
+
+
 
     for x in range(len(bulletList)):
         bullet = bulletList[x]
